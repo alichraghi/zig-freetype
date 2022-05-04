@@ -5,15 +5,23 @@ const freetype = @import("library.zig");
 const testing = std.testing;
 const test_font_path = "test/ComicNeue-Regular.ttf";
 
-test "faces count" {
-    var lib = try freetype.init(testing.allocator);
+test "get faces count" {
+    const lib = try freetype.init();
     defer lib.deinit();
 
     try testing.expectEqual(@as(usize, 1), try lib.facesCount(test_font_path));
 }
 
+test "create face from file" {
+    const lib = try freetype.init();
+    defer lib.deinit();
+
+    var face = try lib.newFace(test_font_path, 0);
+    defer face.deinit();
+}
+
 test "create face from memory" {
-    const lib = try freetype.init(testing.allocator);
+    const lib = try freetype.init();
     defer lib.deinit();
 
     var file = try std.fs.cwd().openFile(test_font_path, .{});
@@ -26,10 +34,10 @@ test "create face from memory" {
     defer face.deinit();
 }
 
-test "create face from file" {
-    var lib = try freetype.init(testing.allocator);
+test "create stroker" {
+    var lib = try freetype.init();
     defer lib.deinit();
 
-    var face = try lib.newFace(test_font_path, 0);
-    defer face.deinit();
+    var stroker = try lib.createStroker();
+    defer stroker.deinit();
 }
