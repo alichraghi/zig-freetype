@@ -1,10 +1,10 @@
 const std = @import("std");
-const testing = std.testing;
 const c = @import("c.zig");
-const Library = @import("library.zig");
-const Glyph = @import("glyph.zig");
+const Matrix = @import("types.zig").Matrix;
+const Vector = @import("types.zig").Vector;
 const Error = @import("error.zig").Error;
 const checkError = @import("error.zig").checkError;
+const testing = std.testing;
 
 const Face = @This();
 
@@ -57,10 +57,41 @@ pub fn loadChar(self: Face, char: u32, flags: LoadFlags) Error!void {
     return checkError(c.FT_Load_Char(self.handle, char, flags.toInt()));
 }
 
+pub fn setTransform(self: Face, matrix: *Matrix, delta: *Vector) Error!void {
+    return c.FT_Set_Transform(self.handle, @ptrCast([*c]c.FT_Matrix, matrix), @ptrCast([*c]c.FT_Vector, delta));
+}
+
 pub fn deinit(self: Face) void {
     checkError(c.FT_Done_Face(self.handle)) catch |err| {
         std.log.err("mach/freetype: Failed to deinitialize Face: {}", .{err});
     };
+}
+
+test "face functions" {
+    const Library = @import("library.zig");
+    const types = @import("types.zig");
+
+    var lib = try Library.init();
+    defer lib.deinit();
+
+    var face = try lib.newFace("test/ComicNeue-Regular.ttf", 0);
+    defer face.deinit();
+
+    try face.setCharSize(12 * 64, 0, 100, 0);
+    try face.setPixelSizes(100, 100);
+    try face.loadGlyph(205, .{});
+
+    var matrix = types.Matrix{
+        .xx = 1 * 0x10000,
+        .xy = -1 * 0x10000,
+        .yx = 1 * 0x10000,
+        .yy = 1 * 0x10000,
+    };
+
+    var delta = types.Vector{ .x = 1000, .y = 0 };
+
+    try face.setTransform(&matrix, &delta);
+    try face.loadChar('A', .{});
 }
 
 test "load flags" {

@@ -58,19 +58,18 @@ pub fn setLcdFilter(self: Library, lcd_filter: LcdFilter) Error!void {
     try checkError(c.FT_Library_SetLcdFilter(self.handle, @enumToInt(lcd_filter)));
 }
 
-const comic_neue_font_path = "test/ComicNeue-Regular.ttf";
 test "get faces count" {
     const lib = try init();
     defer lib.deinit();
 
-    try testing.expectEqual(@as(u32, 1), try lib.facesCount(comic_neue_font_path));
+    try testing.expectEqual(@as(u32, 1), try lib.facesCount("test/ComicNeue-Regular.ttf"));
 }
 
 test "create face from file" {
     const lib = try init();
     defer lib.deinit();
 
-    var face = try lib.newFace(comic_neue_font_path, 0);
+    var face = try lib.newFace("test/ComicNeue-Regular.ttf", 0);
     defer face.deinit();
 }
 
@@ -78,7 +77,7 @@ test "create face from memory" {
     const lib = try init();
     defer lib.deinit();
 
-    var file = try std.fs.cwd().openFile(comic_neue_font_path, .{});
+    var file = try std.fs.cwd().openFile("test/ComicNeue-Regular.ttf", .{});
     defer file.close();
 
     const bytes = try file.readToEndAlloc(testing.allocator, 1024 * 1024 * 1024);
@@ -101,17 +100,4 @@ test "set lcd filter and weights" {
     defer lib.deinit();
 
     try lib.setLcdFilter(.default);
-}
-
-test "load glyph/char" {
-    var lib = try init();
-    defer lib.deinit();
-
-    var face = try lib.newFace(comic_neue_font_path, 0);
-    defer face.deinit();
-
-    try face.setCharSize(12 * 64, 0, 100, 0);
-    try face.setPixelSizes(100, 100);
-    try face.loadGlyph(205, .{});
-    try face.loadChar('A', .{});
 }
