@@ -111,5 +111,6 @@ test "load glyph" {
     defer face.deinit();
 
     try face.setCharSize(12 * 64, 0, 100, 0);
+    try face.setPixelSizes(100, 100);
     try face.loadGlyph(205, .{ .ignore_global_advance_with = true });
 }

@@ -36,9 +36,12 @@ pub const LoadFlags = packed struct {
 };
 
 handle: c.FT_Face,
+pub fn setCharSize(self: Face, width: i32, height: i32, horz_resolution: u16, vert_resolution: u16) Error!void {
+    return checkError(c.FT_Set_Char_Size(self.handle, width, height, horz_resolution, vert_resolution));
+}
 
-pub fn setCharSize(self: Face, width: i32, height: i32, x_resolution: u16, y_resolution: u16) Error!void {
-    return checkError(c.FT_Set_Char_Size(self.handle, width, height, x_resolution, y_resolution));
+pub fn setPixelSizes(self: Face, pixel_width: u32, pixel_height: u32) Error!void {
+    try checkError(c.FT_Set_Pixel_Sizes(self.handle, pixel_width, pixel_height));
 }
 
 pub fn loadGlyph(self: Face, index: u32, flags: LoadFlags) Error!void {
