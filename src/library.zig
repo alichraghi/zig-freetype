@@ -103,7 +103,7 @@ test "set lcd filter and weights" {
     try lib.setLcdFilter(.default);
 }
 
-test "load glyph" {
+test "load glyph/char" {
     var lib = try init();
     defer lib.deinit();
 
@@ -112,5 +112,6 @@ test "load glyph" {
 
     try face.setCharSize(12 * 64, 0, 100, 0);
     try face.setPixelSizes(100, 100);
-    try face.loadGlyph(205, .{ .ignore_global_advance_with = true });
+    try face.loadGlyph(205, .{});
+    try face.loadChar('A', .{});
 }

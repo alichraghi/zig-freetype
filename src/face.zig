@@ -53,6 +53,10 @@ pub fn loadGlyph(self: Face, index: u32, flags: LoadFlags) Error!void {
     return checkError(c.FT_Load_Glyph(self.handle, index, flags.toInt()));
 }
 
+pub fn loadChar(self: Face, char: u32, flags: LoadFlags) Error!void {
+    return checkError(c.FT_Load_Char(self.handle, char, flags.toInt()));
+}
+
 pub fn deinit(self: Face) void {
     checkError(c.FT_Done_Face(self.handle)) catch |err| {
         std.log.err("mach/freetype: Failed to deinitialize Face: {}", .{err});
