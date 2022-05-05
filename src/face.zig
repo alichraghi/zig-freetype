@@ -8,6 +8,23 @@ const testing = std.testing;
 
 const Face = @This();
 
+const LoadFlag = enum(i32) {
+    no_scale = c.FT_LOAD_NO_SCALE,
+    no_hinting = c.FT_LOAD_NO_HINTING,
+    render = c.FT_LOAD_RENDER,
+    no_bitmap = c.FT_LOAD_NO_BITMAP,
+    vertical_layout = c.FT_LOAD_VERTICAL_LAYOUT,
+    force_autohint = c.FT_LOAD_FORCE_AUTOHINT,
+    crop_bitmap = c.FT_LOAD_CROP_BITMAP,
+    pedantic = c.FT_LOAD_PEDANTIC,
+    ignore_global_advance_with = c.FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH,
+    no_recurse = c.FT_LOAD_NO_RECURSE,
+    ignore_transform = c.FT_LOAD_IGNORE_TRANSFORM,
+    monochrome = c.FT_LOAD_MONOCHROME,
+    linear_design = c.FT_LOAD_LINEAR_DESIGN,
+    no_autohint = c.FT_LOAD_NO_AUTOHINT,
+};
+
 pub const LoadFlags = packed struct {
     no_scale: bool = false,
     no_hinting: bool = false,
@@ -26,9 +43,9 @@ pub const LoadFlags = packed struct {
 
     fn toInt(flags: LoadFlags) i32 {
         var value: i32 = 0x0;
-        inline for (comptime std.meta.fieldNames(LoadFlags)) |field_name, i| {
+        inline for (comptime std.meta.fieldNames(LoadFlags)) |field_name| {
             if (@field(flags, field_name)) {
-                value |= @as(i32, 1) << i;
+                value |= @enumToInt(@field(LoadFlag, field_name));
             }
         }
         return value;
