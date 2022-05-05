@@ -36,6 +36,11 @@ pub const LoadFlags = packed struct {
 };
 
 handle: c.FT_Face,
+
+pub fn attachFile(self: Face, path: []const u8) Error!void {
+    return checkError(c.FT_Attach_File(self.handle, path.ptr));
+}
+
 pub fn setCharSize(self: Face, width: i32, height: i32, horz_resolution: u16, vert_resolution: u16) Error!void {
     return checkError(c.FT_Set_Char_Size(self.handle, width, height, horz_resolution, vert_resolution));
 }
@@ -60,4 +65,8 @@ test "load flags" {
         .no_bitmap = true,
     }).toInt());
     try testing.expectEqual(c.FT_LOAD_DEFAULT, (LoadFlags{}).toInt());
+}
+
+test "analyze attachFile" {
+    _ = attachFile;
 }
