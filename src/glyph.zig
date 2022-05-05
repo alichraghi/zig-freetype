@@ -1,19 +1,9 @@
 const c = @import("c.zig");
-const Library = @import("library.zig");
-const checkError = @import("error.zig").checkError;
 
-pub const Stroker = struct {
-    handle: c.FT_Stroker,
+const Glyph = @This();
 
-    pub fn deinit(self: Stroker) void {
-        c.FT_Stroker_Done(self.handle);
-    }
-};
+handle: c.FT_GlyphSlot,
 
-pub const Glyph = struct {
-    handle: c.FT_GlyphSlot,
-
-    pub fn deinit(self: Glyph) void {
-        c.FT_Glyph_Done(self.handle);
-    }
-};
+pub fn deinit(self: Glyph) void {
+    c.FT_Glyph_Done(self.handle);
+}

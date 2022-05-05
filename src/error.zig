@@ -91,7 +91,6 @@ pub const Error = error{
     BbxTooBig,
     CorruptedFontHeader,
     CorruptedFontGlyphs,
-    Max,
 };
 
 pub fn checkError(err: c_int) Error!void {
@@ -186,12 +185,11 @@ pub fn checkError(err: c_int) Error!void {
         c.FT_Err_Bbx_Too_Big => Error.BbxTooBig,
         c.FT_Err_Corrupted_Font_Header => Error.CorruptedFontHeader,
         c.FT_Err_Corrupted_Font_Glyphs => Error.CorruptedFontGlyphs,
-        c.FT_Err_Max => Error.Max,
         else => unreachable,
     };
 }
 
 test "error convertion" {
-    try checkError(0);
+    try checkError(c.FT_Err_Ok);
     try testing.expectError(Error.OutOfMemory, checkError(c.FT_Err_Out_Of_Memory));
 }
