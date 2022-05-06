@@ -2,19 +2,13 @@ const std = @import("std");
 const c = @import("c.zig");
 const Face = @import("face.zig");
 const Stroker = @import("stroker.zig");
+const OpenArgs = @import("types.zig").OpenArgs;
 const Error = @import("error.zig").Error;
 const checkError = @import("error.zig").checkError;
 const mem = std.mem;
 const testing = std.testing;
 
 const Library = @This();
-
-pub const LcdFilter = enum(u32) {
-    none = c.FT_LCD_FILTER_NONE,
-    default = c.FT_LCD_FILTER_DEFAULT,
-    light = c.FT_LCD_FILTER_LIGHT,
-    legacy = c.FT_LCD_FILTER_LEGACY,
-};
 
 handle: c.FT_Library,
 
@@ -31,19 +25,37 @@ pub fn deinit(self: Library) void {
     };
 }
 
-/// returns the faces count of a font in the `path`
+/// Returns the faces count of a font by its path
 pub fn facesCount(self: Library, path: []const u8) Error!u32 {
     const face = try self.newFace(path, -1);
     return @intCast(u32, face.handle.*.num_faces);
 }
 
-/// same as `facesCount` but opens font from a bytes slice.
+/// Returns the faces count of a font from a bytes slice
 pub fn facesCountMemory(self: Library, path: []const u8) Error!u32 {
     const face = try self.newFaceMemory(path, -1);
     return @intCast(u32, face.handle.*.num_faces);
 }
 
-/// opens a font by `path` and returns a face at the given index
+/// Call `openFace` to open a font by its path.
+pub fn newFace(self: Library, path: []const u8, face_index: i32) Error!Face {
+    return self.openFace(.{
+        .flags = .{ .path = true },
+        .data = .{ .path = path },
+    }, face_index);
+}
+
+/// Call `openFace` to open a font from a bytes slice
+///
+/// NOTE: Don't deallocate the memory before calling `Face.deinit()`
+pub fn newFaceMemory(self: Library, bytes: []const u8, face_index: i32) Error!Face {
+    return self.openFace(.{
+        .flags = .{ .memory = true },
+        .data = .{ .memory = bytes },
+    }, face_index);
+}
+
+/// Create a face object from a given resource described by `OpenArgs`
 ///
 /// `face_index` field holds two different values.
 /// Bits `0`-`15` are the index of the face in the font file (starting with `0`).
@@ -54,32 +66,23 @@ pub fn facesCountMemory(self: Library, path: []const u8) Error!u32 {
 /// instances).  For non-variation fonts, bits `16`-`30` are ignored.
 /// Assuming that you want to access the third named instance in face `4`,
 /// `face_index` should be set to `0x00030004`.  If you want to access
-/// face `4` without variation handling, simply set *face_index* to value `4`.
-pub fn newFace(self: Library, path: []const u8, face_index: i32) Error!Face {
+/// face `4` without variation handling, simply set *face_index* to value `4`
+pub fn openFace(self: Library, args: OpenArgs, face_index: i32) Error!Face {
     var face = mem.zeroes(Face);
-    try checkError(c.FT_New_Face(self.handle, path.ptr, face_index, &face.handle));
+    try checkError(c.FT_Open_Face(self.handle, &args.toCInterface(), face_index, &face.handle));
     return face;
 }
 
-/// same as `newFace` but opens font from a bytes slice.
-///
-/// NOTE: don't deallocate the memory before calling `Face.deinit()`
-pub fn newFaceMemory(self: Library, bytes: []const u8, face_index: i32) Error!Face {
-    var face = mem.zeroes(Face);
-    try checkError(c.FT_New_Memory_Face(self.handle, bytes.ptr, @intCast(i32, bytes.len), face_index, &face.handle));
-    return face;
-}
-
-/// Create a new stroker object.
+/// Create a new stroker object
 pub fn newStroker(self: Library) Error!Stroker {
-    var stroker = Stroker{ .handle = undefined };
+    var stroker = mem.zeroes(Stroker);
     try checkError(c.FT_Stroker_New(self.handle, &stroker.handle));
     return stroker;
 }
 
-/// used to change filter applied to LCD decimated
-/// bitmaps, like the ones used when calling `Glyph.Slot.render` with
-/// `render_mode_lcd` or `render_mode_lcd_v` flags.
+/// Change filter applied to LCD decimated bitmaps,
+/// like the ones used when calling `Glyph.Slot.render` with
+/// `.render_mode_lcd` or `.render_mode_lcd_v` flags
 pub fn setLcdFilter(self: Library, lcd_filter: LcdFilter) Error!void {
     try checkError(c.FT_Library_SetLcdFilter(self.handle, @enumToInt(lcd_filter)));
 }
@@ -88,9 +91,9 @@ test "get faces count" {
     const lib = try init();
     defer lib.deinit();
 
-    try testing.expectEqual(@as(u32, 1), try lib.facesCount("test/ComicNeue-Regular.ttf"));
+    try testing.expectEqual(@as(u32, 1), try lib.facesCount("test/ComicNeue.ttf"));
 
-    var file = @embedFile("../test/ComicNeue-Regular.ttf");
+    var file = @embedFile("../test/ComicNeue.ttf");
     try testing.expectEqual(@as(u32, 1), try lib.facesCountMemory(file));
 }
 
@@ -98,7 +101,7 @@ test "create face from file" {
     const lib = try init();
     defer lib.deinit();
 
-    var face = try lib.newFace("test/ComicNeue-Regular.ttf", 0);
+    var face = try lib.newFace("test/ComicNeue.ttf", 0);
     defer face.deinit();
 }
 
@@ -106,7 +109,7 @@ test "create face from memory" {
     const lib = try init();
     defer lib.deinit();
 
-    var file = @embedFile("../test/ComicNeue-Regular.ttf");
+    var file = @embedFile("../test/ComicNeue.ttf");
 
     var face = try lib.newFaceMemory(file, 0);
     defer face.deinit();
