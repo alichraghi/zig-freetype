@@ -3,6 +3,7 @@ const c = @import("c.zig");
 const Face = @import("face.zig");
 const Stroker = @import("stroker.zig");
 const OpenArgs = @import("types.zig").OpenArgs;
+const LcdFilter = @import("types.zig").LcdFilter;
 const Error = @import("error.zig").Error;
 const checkError = @import("error.zig").checkError;
 const mem = std.mem;
@@ -91,9 +92,9 @@ test "get faces count" {
     const lib = try init();
     defer lib.deinit();
 
-    try testing.expectEqual(@as(u32, 1), try lib.facesCount("test/ComicNeue.ttf"));
+    try testing.expectEqual(@as(u32, 1), try lib.facesCount("src/test/ComicNeue.ttf"));
 
-    var file = @embedFile("../test/ComicNeue.ttf");
+    var file = @embedFile("test/ComicNeue.ttf");
     try testing.expectEqual(@as(u32, 1), try lib.facesCountMemory(file));
 }
 
@@ -101,7 +102,7 @@ test "create face from file" {
     const lib = try init();
     defer lib.deinit();
 
-    var face = try lib.newFace("test/ComicNeue.ttf", 0);
+    var face = try lib.newFace("src/test/ComicNeue.ttf", 0);
     defer face.deinit();
 }
 
@@ -109,7 +110,7 @@ test "create face from memory" {
     const lib = try init();
     defer lib.deinit();
 
-    var file = @embedFile("../test/ComicNeue.ttf");
+    var file = @embedFile("test/ComicNeue.ttf");
 
     var face = try lib.newFaceMemory(file, 0);
     defer face.deinit();

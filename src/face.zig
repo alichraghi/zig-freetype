@@ -162,7 +162,7 @@ test "load glyph/char" {
     var lib = try Library.init();
     defer lib.deinit();
 
-    var face = try lib.newFace("test/ComicNeue.ttf", 0);
+    var face = try lib.newFace("src/test/ComicNeue.ttf", 0);
     defer face.deinit();
 
     try face.setCharSize(12 * 64, 0, 100, 0);
@@ -176,28 +176,28 @@ test "attach file" {
     var lib = try Library.init();
     defer lib.deinit();
 
-    var face = try lib.newFace("test/DejaVuSans.pfb", 0);
+    var face = try lib.newFace("src/test/DejaVuSans.pfb", 0);
     defer face.deinit();
 
-    try face.attachFile("test/DejaVuSans.pfm");
+    try face.attachFile("src/test/DejaVuSans.pfm");
 }
 
 test "attach memory" {
     var lib = try Library.init();
     defer lib.deinit();
 
-    var face = try lib.newFace("test/DejaVuSans.pfb", 0);
+    var face = try lib.newFace("src/test/DejaVuSans.pfb", 0);
     defer face.deinit();
 
-    const file = @embedFile("../test/DejaVuSans.pfm");
+    const file = @embedFile("test/DejaVuSans.pfm");
     try face.attachMemory(file);
 }
 
-test "attach file" {
+test "transform" {
     var lib = try Library.init();
     defer lib.deinit();
 
-    var face = try lib.newFace("test/ComicNeue.ttf", 0);
+    var face = try lib.newFace("src/test/ComicNeue.ttf", 0);
     defer face.deinit();
 
     var matrix = types.Matrix{

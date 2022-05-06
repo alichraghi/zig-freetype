@@ -13,6 +13,7 @@ pub fn build(b: *std.build.Builder) void {
     // lib.install();
 
     const main_tests = b.addTestExe("test", "src/main.zig");
+    main_tests.use_stage1 = false;
     main_tests.linkLibC();
     main_tests.addSystemIncludePath("/usr/include/freetype2");
     main_tests.linkSystemLibraryName("freetype");
