@@ -31,29 +31,55 @@ pub fn deinit(self: Library) void {
     };
 }
 
+/// returns the faces count of a font in the `path`
 pub fn facesCount(self: Library, path: []const u8) Error!u32 {
     const face = try self.newFace(path, -1);
     return @intCast(u32, face.handle.*.num_faces);
 }
 
-pub fn newFace(self: Library, path: []const u8, index: i32) Error!Face {
+/// same as `facesCount` but opens font from a bytes slice.
+pub fn facesCountMemory(self: Library, path: []const u8) Error!u32 {
+    const face = try self.newFaceMemory(path, -1);
+    return @intCast(u32, face.handle.*.num_faces);
+}
+
+/// opens a font by `path` and returns a face at the given index
+///
+/// `face_index` field holds two different values.
+/// Bits `0`-`15` are the index of the face in the font file (starting with `0`).
+/// Set it to `0` if there is only one face in the font file.
+/// [*Since `2.6.1`*] Bits `16`-`30` are relevant to GX and OpenType variation
+/// fonts only, specifying the named instance index for the current face
+/// index (starting with value `1`; value `0` makes FreeType ignore named
+/// instances).  For non-variation fonts, bits `16`-`30` are ignored.
+/// Assuming that you want to access the third named instance in face `4`,
+/// `face_index` should be set to `0x00030004`.  If you want to access
+/// face `4` without variation handling, simply set *face_index* to value `4`.
+pub fn newFace(self: Library, path: []const u8, face_index: i32) Error!Face {
     var face = mem.zeroes(Face);
-    try checkError(c.FT_New_Face(self.handle, path.ptr, index, &face.handle));
+    try checkError(c.FT_New_Face(self.handle, path.ptr, face_index, &face.handle));
     return face;
 }
 
-pub fn newFaceFromMemory(self: Library, bytes: []const u8, index: i32) Error!Face {
+/// same as `newFace` but opens font from a bytes slice.
+///
+/// NOTE: don't deallocate the memory before calling `Face.deinit()`
+pub fn newFaceMemory(self: Library, bytes: []const u8, face_index: i32) Error!Face {
     var face = mem.zeroes(Face);
-    try checkError(c.FT_New_Memory_Face(self.handle, bytes.ptr, @intCast(i32, bytes.len), index, &face.handle));
+    try checkError(c.FT_New_Memory_Face(self.handle, bytes.ptr, @intCast(i32, bytes.len), face_index, &face.handle));
     return face;
 }
 
-pub fn createStroker(self: Library) Error!Stroker {
+/// Create a new stroker object.
+pub fn newStroker(self: Library) Error!Stroker {
     var stroker = Stroker{ .handle = undefined };
     try checkError(c.FT_Stroker_New(self.handle, &stroker.handle));
     return stroker;
 }
 
+/// used to change filter applied to LCD decimated
+/// bitmaps, like the ones used when calling `Glyph.Slot.render` with
+/// `render_mode_lcd` or `render_mode_lcd_v` flags.
 pub fn setLcdFilter(self: Library, lcd_filter: LcdFilter) Error!void {
     try checkError(c.FT_Library_SetLcdFilter(self.handle, @enumToInt(lcd_filter)));
 }
@@ -63,6 +89,9 @@ test "get faces count" {
     defer lib.deinit();
 
     try testing.expectEqual(@as(u32, 1), try lib.facesCount("test/ComicNeue-Regular.ttf"));
+
+    var file = @embedFile("../test/ComicNeue-Regular.ttf");
+    try testing.expectEqual(@as(u32, 1), try lib.facesCountMemory(file));
 }
 
 test "create face from file" {
@@ -77,13 +106,9 @@ test "create face from memory" {
     const lib = try init();
     defer lib.deinit();
 
-    var file = try std.fs.cwd().openFile("test/ComicNeue-Regular.ttf", .{});
-    defer file.close();
+    var file = @embedFile("../test/ComicNeue-Regular.ttf");
 
-    const bytes = try file.readToEndAlloc(testing.allocator, 1024 * 1024 * 1024);
-    defer testing.allocator.free(bytes);
-
-    var face = try lib.newFaceFromMemory(bytes, 0);
+    var face = try lib.newFaceMemory(file, 0);
     defer face.deinit();
 }
 
@@ -91,7 +116,7 @@ test "create stroker" {
     var lib = try init();
     defer lib.deinit();
 
-    var stroker = try lib.createStroker();
+    var stroker = try lib.newStroker();
     defer stroker.deinit();
 }
 
