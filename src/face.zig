@@ -88,7 +88,7 @@ pub fn setPixelSizes(self: Face, pixel_width: u32, pixel_height: u32) Error!void
 
 /// Load a glyph into the glyph slot of a face object
 ///
-/// `glyph_index`:
+/// `index`:
 /// The index of the glyph in the font file.  For CID-keyed fonts
 /// either in PS or in CFF format) this argument specifies the CID
 /// value.
@@ -118,16 +118,6 @@ pub fn loadGlyph(self: Face, index: u32, flags: LoadFlags) Error!void {
 
 /// Load a glyph into the glyph slot of a face object, accessed by its
 /// character code
-///
-/// `char_code`:
-///  The glyph's character code, according to the current charmap used in
-///  the face.
-///
-/// `load_flags`:
-///  A flag indicating what to load for this glyph. The `LoadFlag`
-///  constants can be used to control the glyph loading process (e.g.,
-///  whether the outline should be scaled, whether to load bitmaps or
-///  not, whether to hint the outline, etc).
 pub fn loadChar(self: Face, char: u32, flags: LoadFlags) Error!void {
     return checkError(c.FT_Load_Char(self.handle, char, flags.toInt()));
 }
