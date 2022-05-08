@@ -2,6 +2,17 @@ const std = @import("std");
 const c = @import("c.zig");
 const testing = std.testing;
 
+/// cast struct fields values to bit fields
+fn structFlagsToInt(comptime IntType: type, comptime StructType: type, comptime EnumDataType: type, flags: StructType) IntType {
+    var value: IntType = 0x0;
+    inline for (comptime std.meta.fieldNames(StructType)) |field_name| {
+        if (@field(flags, field_name)) {
+            value |= @enumToInt(@field(EnumDataType, field_name));
+        }
+    }
+    return value;
+}
+
 pub const Vector = extern struct {
     x: i64,
     y: i64,
@@ -85,13 +96,7 @@ pub const LoadFlags = packed struct {
     };
 
     pub fn toInt(flags: LoadFlags) i32 {
-        var value: i32 = 0x0;
-        inline for (comptime std.meta.fieldNames(LoadFlags)) |field_name| {
-            if (@field(flags, field_name)) {
-                value |= @enumToInt(@field(Flag, field_name));
-            }
-        }
-        return value;
+        return structFlagsToInt(i32, LoadFlags, Flag, flags);
     }
 };
 
@@ -111,13 +116,7 @@ pub const OpenFlags = packed struct {
     };
 
     pub fn toInt(flags: OpenFlags) u16 {
-        var value: u16 = 0x0;
-        inline for (comptime std.meta.fieldNames(OpenFlags)) |field_name| {
-            if (@field(flags, field_name)) {
-                value |= @enumToInt(@field(Flag, field_name));
-            }
-        }
-        return value;
+        return structFlagsToInt(u16, OpenFlags, Flag, flags);
     }
 };
 
@@ -148,6 +147,20 @@ pub const OpenArgs = struct {
             },
         }
         return oa;
+    }
+};
+
+pub const StyleFlags = packed struct {
+    bold: bool = false,
+    italic: bool = false,
+
+    pub const Flag = enum(u8) {
+        bold = c.FT_STYLE_FLAG_BOLD,
+        italic = c.FT_STYLE_FLAG_ITALIC,
+    };
+
+    pub fn toInt(flags: StyleFlags) u8 {
+        return structFlagsToInt(u8, StyleFlags, Flag, flags);
     }
 };
 
