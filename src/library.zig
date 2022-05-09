@@ -35,7 +35,7 @@ pub fn facesCount(self: Library, path: []const u8) Error!u32 {
 
 /// Returns the faces count of a font from a bytes slice
 pub fn facesCountMemory(self: Library, bytes: []const u8) Error!u32 {
-    const face = try self.newFaceMemory(path, -1);
+    const face = try self.newFaceMemory(bytes, -1);
     defer face.deinit();
     return @intCast(u32, face.handle.*.num_faces);
 }
