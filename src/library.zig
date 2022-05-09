@@ -29,12 +29,14 @@ pub fn deinit(self: Library) void {
 /// Returns the faces count of a font by its path
 pub fn facesCount(self: Library, path: []const u8) Error!u32 {
     const face = try self.newFace(path, -1);
+    defer face.deinit();
     return @intCast(u32, face.handle.*.num_faces);
 }
 
 /// Returns the faces count of a font from a bytes slice
-pub fn facesCountMemory(self: Library, path: []const u8) Error!u32 {
+pub fn facesCountMemory(self: Library, bytes: []const u8) Error!u32 {
     const face = try self.newFaceMemory(path, -1);
+    defer face.deinit();
     return @intCast(u32, face.handle.*.num_faces);
 }
 
@@ -69,23 +71,23 @@ pub fn newFaceMemory(self: Library, bytes: []const u8, face_index: i32) Error!Fa
 /// `face_index` should be set to `0x00030004`.  If you want to access
 /// face `4` without variation handling, simply set *face_index* to value `4`
 pub fn openFace(self: Library, args: OpenArgs, face_index: i32) Error!Face {
-    var face = mem.zeroes(Face);
-    try checkError(c.FT_Open_Face(self.handle, &args.toCInterface(), face_index, &face.handle));
-    return face;
+    var face = mem.zeroes(c.FT_Face);
+    try checkError(c.FT_Open_Face(self.handle, &args.toCInterface(), face_index, &face));
+    return Face.init(face);
 }
 
 /// Create a new stroker object
 pub fn newStroker(self: Library) Error!Stroker {
-    var stroker = mem.zeroes(Stroker);
-    try checkError(c.FT_Stroker_New(self.handle, &stroker.handle));
-    return stroker;
+    var stroker = mem.zeroes(c.FT_Stroker);
+    try checkError(c.FT_Stroker_New(self.handle, &stroker));
+    return Stroker.init(stroker);
 }
 
 /// Change filter applied to LCD decimated bitmaps,
 /// like the ones used when calling `Glyph.Slot.render` with
 /// `.render_mode_lcd` or `.render_mode_lcd_v` flags
 pub fn setLcdFilter(self: Library, lcd_filter: LcdFilter) Error!void {
-    try checkError(c.FT_Library_SetLcdFilter(self.handle, @enumToInt(lcd_filter)));
+    return checkError(c.FT_Library_SetLcdFilter(self.handle, @enumToInt(lcd_filter)));
 }
 
 test "get faces count" {

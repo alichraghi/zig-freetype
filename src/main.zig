@@ -1,12 +1,15 @@
 pub usingnamespace @import("types.zig");
 pub const Error = @import("error.zig").Error;
 pub const Face = @import("face.zig");
-pub const Glyph = @import("glyph.zig");
+pub const Glyph = @import("glyph_slot.zig");
 pub const Library = @import("library.zig");
 
 test {
-    _ = @import("error.zig");
-    _ = @import("face.zig");
-    _ = @import("glyph.zig");
-    _ = @import("library.zig");
+    const refAllDecls = @import("std").testing.refAllDecls;
+    refAllDecls(@import("error.zig"));
+    refAllDecls(@import("face.zig"));
+    refAllDecls(@import("glyph_slot.zig"));
+    refAllDecls(@import("stroker.zig"));
+    refAllDecls(@import("types.zig"));
+    refAllDecls(@import("library.zig"));
 }

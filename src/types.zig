@@ -164,6 +164,21 @@ pub const StyleFlags = packed struct {
     }
 };
 
+pub const KerningMode = enum(u2) {
+    default = c.FT_KERNING_DEFAULT,
+    unfitted = c.FT_KERNING_UNFITTED,
+    unscaled = c.FT_KERNING_UNSCALED,
+};
+
+pub const RenderMode = enum(u3) {
+    normal = c.FT_RENDER_MODE_NORMAL,
+    light = c.FT_RENDER_MODE_LIGHT,
+    mono = c.FT_RENDER_MODE_MONO,
+    lcd = c.FT_RENDER_MODE_LCD,
+    lcd_v = c.FT_RENDER_MODE_LCD_V,
+    sdf = c.FT_RENDER_MODE_SDF,
+};
+
 test "load flags" {
     try testing.expectEqual(c.FT_LOAD_CROP_BITMAP | c.FT_LOAD_NO_BITMAP, (LoadFlags{
         .crop_bitmap = true,

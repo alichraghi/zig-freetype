@@ -1,10 +1,12 @@
 const std = @import("std");
 const c = @import("c.zig");
 const types = @import("types.zig");
+const GlyphSlot = @import("glyph_slot.zig");
 const Error = @import("error.zig").Error;
 const checkError = @import("error.zig").checkError;
 const Library = @import("library.zig");
 const testing = std.testing;
+const KerningMode = types.KerningMode;
 const Matrix = types.Matrix;
 const Vector = types.Vector;
 const LoadFlags = types.LoadFlags;
@@ -13,6 +15,14 @@ const OpenArgs = types.OpenArgs;
 const Face = @This();
 
 handle: c.FT_Face,
+glyph: GlyphSlot,
+
+pub fn init(handle: c.FT_Face) Face {
+    return Face{
+        .handle = handle,
+        .glyph = GlyphSlot.init(handle.*.glyph),
+    };
+}
 
 /// Call `attachStream` to attach a file by its path
 pub fn attachFile(self: Face, path: []const u8) Error!void {
@@ -83,7 +93,7 @@ pub fn setCharSize(self: Face, width: i32, height: i32, horz_resolution: u16, ve
 ///
 /// Don't use this function if you are using the FreeType cache API.
 pub fn setPixelSizes(self: Face, pixel_width: u32, pixel_height: u32) Error!void {
-    try checkError(c.FT_Set_Pixel_Sizes(self.handle, pixel_width, pixel_height));
+    return checkError(c.FT_Set_Pixel_Sizes(self.handle, pixel_width, pixel_height));
 }
 
 /// Load a glyph into the glyph slot of a face object
@@ -109,7 +119,7 @@ pub fn setPixelSizes(self: Face, pixel_width: u32, pixel_height: u32) Error!void
 /// corresponding glyph in the font). See the discussion of the
 /// `FT_FACE_FLAG_CID_KEYED` flag for more details.
 ///
-/// If you receive `FT_Err_Glyph_Too_Big`, try getting the glyph outline
+/// If you receive `GlyphTooBig` error, try getting the glyph outline
 /// at EM size, then scale it manually and fill it as a graphics
 /// operation.
 pub fn loadGlyph(self: Face, index: u32, flags: LoadFlags) Error!void {
@@ -142,24 +152,66 @@ pub fn setTransform(self: Face, matrix: *Matrix, delta: *Vector) Error!void {
     return c.FT_Set_Transform(self.handle, @ptrCast([*c]c.FT_Matrix, matrix), @ptrCast([*c]c.FT_Vector, delta));
 }
 
+/// Return the glyph index of a given character code.
+/// This function uses the currently selected charmap to do the mapping.
+///
+/// NOTE:
+/// If you use FreeType to manipulate the contents of font files
+/// directly, be aware that the glyph index returned by this
+/// function doesn't always correspond to the internal indices
+/// used within the file. This is done to ensure that
+/// value 0 always corresponds to the ‘missing glyph’.
+/// If the first glyph is not named ‘.notdef’, then
+/// for Type `1` and Type `42` fonts, ‘.notdef’ will be moved
+/// into the glyph ID 0 position, and whatever
+/// was there will be moved to the position ‘.notdef’ had.
+/// For Type `1` fonts, if there is no ‘.notdef’ glyph
+/// at all, then one will be created at index `0` and whatever
+/// was there will be moved to the last index – Type `42` fonts
+/// are considered invalid under this condition.
+pub fn getCharIndex(self: Face, index: u32) ?u32 {
+    var i = c.FT_Get_Char_Index(self.handle, index);
+    return if (i == 0) null else i;
+}
+
+/// Return the kerning vector between two glyphs of the same face.
+/// Only horizontal layouts (left-to-right & right-to-left) are
+/// supported by this method. Other layouts, or more sophisticated
+/// kernings, are out of the scope of this API function – they can be
+/// implemented through format-specific interfaces.
+/// Kerning for OpenType fonts implemented in a ‘GPOS’ table is not supported;
+/// use FT_HAS_KERNING to find out whether a font has data that
+/// can be extracted with FT_Get_Kerning.
+pub fn getKerning(self: Face, left_char_index: u32, right_char_index: u32, mode: KerningMode) Error!Vector {
+    var vec = std.mem.zeroes(Vector);
+    try checkError(c.FT_Get_Kerning(self.handle, left_char_index, right_char_index, @enumToInt(mode), @ptrCast([*c]c.FT_Vector, &vec)));
+    return vec;
+}
+
 pub fn deinit(self: Face) void {
     checkError(c.FT_Done_Face(self.handle)) catch |err| {
         std.log.err("mach/freetype: Failed to deinitialize Face: {}", .{err});
     };
 }
 
-test "load glyph/char" {
+test "load glyph" {
     var lib = try Library.init();
     defer lib.deinit();
 
     var face = try lib.newFace("src/test/ComicNeue.ttf", 0);
     defer face.deinit();
 
-    try face.setCharSize(12 * 64, 0, 100, 0);
     try face.setPixelSizes(100, 100);
+    try face.setCharSize(40 * 64, 0, 50, 0);
 
     try face.loadGlyph(205, .{});
-    try face.loadChar('A', .{});
+    try face.glyph.render(.normal);
+
+    try face.loadChar('A', .{ .render = true });
+    try face.glyph.render(.normal);
+
+    try testing.expectEqual(@as(u32, 36), face.getCharIndex('A').?);
+    _ = try face.getKerning(0, 0, .default);
 }
 
 test "attach file" {
