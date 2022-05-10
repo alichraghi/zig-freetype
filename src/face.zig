@@ -1,10 +1,7 @@
 const std = @import("std");
 const c = @import("c.zig");
 const GlyphSlot = @import("glyph_slot.zig");
-const Error = @import("error.zig").Error;
-const checkError = @import("error.zig").checkError;
 const Library = @import("library.zig");
-const bitFieldsToStruct = @import("utils.zig").bitFieldsToStruct;
 const KerningMode = @import("types.zig").KerningMode;
 const StyleFlags = @import("types.zig").StyleFlags;
 const Matrix = @import("types.zig").Matrix;
@@ -12,6 +9,9 @@ const Vector = @import("types.zig").Vector;
 const SizeMetrics = @import("types.zig").SizeMetrics;
 const LoadFlags = @import("types.zig").LoadFlags;
 const OpenArgs = @import("types.zig").OpenArgs;
+const Error = @import("error.zig").Error;
+const checkError = @import("error.zig").checkError;
+const bitFieldsToStruct = @import("utils.zig").bitFieldsToStruct;
 const testing = std.testing;
 
 const Face = @This();
