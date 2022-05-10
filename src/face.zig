@@ -1,16 +1,17 @@
 const std = @import("std");
 const c = @import("c.zig");
-const types = @import("types.zig");
 const GlyphSlot = @import("glyph_slot.zig");
 const Error = @import("error.zig").Error;
 const checkError = @import("error.zig").checkError;
 const Library = @import("library.zig");
+const bitFieldsToStruct = @import("utils.zig").bitFieldsToStruct;
+const KerningMode = @import("types.zig").KerningMode;
+const StyleFlags = @import("types.zig").StyleFlags;
+const Matrix = @import("types.zig").Matrix;
+const Vector = @import("types.zig").Vector;
+const LoadFlags = @import("types.zig").LoadFlags;
+const OpenArgs = @import("types.zig").OpenArgs;
 const testing = std.testing;
-const KerningMode = types.KerningMode;
-const Matrix = types.Matrix;
-const Vector = types.Vector;
-const LoadFlags = types.LoadFlags;
-const OpenArgs = types.OpenArgs;
 
 const Face = @This();
 
@@ -76,8 +77,8 @@ pub fn attachStream(self: Face, args: OpenArgs) Error!void {
 /// resolution values are zero, they are set to `72dpi`.
 ///
 /// Don't use this function if you are using the FreeType cache API.
-pub fn setCharSize(self: Face, width: i32, height: i32, horz_resolution: u16, vert_resolution: u16) Error!void {
-    return checkError(c.FT_Set_Char_Size(self.handle, width, height, horz_resolution, vert_resolution));
+pub fn setCharSize(self: Face, pt_width: i32, pt_height: i32, horz_resolution: u16, vert_resolution: u16) Error!void {
+    return checkError(c.FT_Set_Char_Size(self.handle, pt_width, pt_height, horz_resolution, vert_resolution));
 }
 
 /// Request the nominal size in pixels
@@ -123,13 +124,13 @@ pub fn setPixelSizes(self: Face, pixel_width: u32, pixel_height: u32) Error!void
 /// at EM size, then scale it manually and fill it as a graphics
 /// operation.
 pub fn loadGlyph(self: Face, index: u32, flags: LoadFlags) Error!void {
-    return checkError(c.FT_Load_Glyph(self.handle, index, flags.toInt()));
+    return checkError(c.FT_Load_Glyph(self.handle, index, flags.toBitFields()));
 }
 
 /// Load a glyph into the glyph slot of a face object, accessed by its
 /// character code
 pub fn loadChar(self: Face, char: u32, flags: LoadFlags) Error!void {
-    return checkError(c.FT_Load_Char(self.handle, char, flags.toInt()));
+    return checkError(c.FT_Load_Char(self.handle, char, flags.toBitFields()));
 }
 
 /// Set the transformation that is applied to glyph images when they are
@@ -188,6 +189,103 @@ pub fn getKerning(self: Face, left_char_index: u32, right_char_index: u32, mode:
     return vec;
 }
 
+pub fn hasHorizontal(self: Face) bool {
+    return c.FT_HAS_HORIZONTAL(self.handle);
+}
+
+pub fn hasVertical(self: Face) bool {
+    return c.FT_HAS_VERTICAL(self.handle);
+}
+
+pub fn hasKerning(self: Face) bool {
+    return c.FT_HAS_KERNING(self.handle);
+}
+
+pub fn hasFixedSizes(self: Face) bool {
+    return c.FT_HAS_FIXED_SIZES(self.handle);
+}
+
+pub fn hasGlyphNames(self: Face) bool {
+    return c.FT_HAS_GLYPH_NAMES(self.handle);
+}
+
+pub fn hasColor(self: Face) bool {
+    return c.FT_HAS_COLOR(self.handle);
+}
+
+pub fn isScalable(self: Face) bool {
+    return c.FT_IS_SCALABLE(self.handle);
+}
+
+pub fn isSfnt(self: Face) bool {
+    return c.FT_IS_SFNT(self.handle);
+}
+
+pub fn isFixedWidth(self: Face) bool {
+    return c.FT_IS_FIXED_WIDTH(self.handle);
+}
+
+pub fn isCidKeyed(self: Face) bool {
+    return c.FT_IS_CID_KEYED(self.handle);
+}
+
+pub fn isTricky(self: Face) bool {
+    return c.FT_IS_TRICKY(self.handle);
+}
+
+pub fn ascender(self: Face) i16 {
+    return self.handle.*.ascender;
+}
+
+pub fn descender(self: Face) i16 {
+    return self.handle.*.descender;
+}
+
+pub fn emSize(self: Face) u16 {
+    return self.handle.*.units_per_EM;
+}
+
+pub fn height(self: Face) i16 {
+    return self.handle.*.height;
+}
+
+pub fn maxAdvanceWidth(self: Face) i16 {
+    return self.handle.*.max_advance_width;
+}
+
+pub fn maxAdvanceHeight(self: Face) i16 {
+    return self.handle.*.max_advance_height;
+}
+
+pub fn underlinePosition(self: Face) i16 {
+    return self.handle.*.underline_position;
+}
+
+pub fn underlineThickness(self: Face) i16 {
+    return self.handle.*.underline_thickness;
+}
+
+pub fn numFaces(self: Face) i64 {
+    return self.handle.*.num_faces;
+}
+
+pub fn numGlyphs(self: Face) i64 {
+    return self.handle.*.num_glyphs;
+}
+
+pub fn familyName(self: Face) ?[:0]const u8 {
+    var family = std.mem.span(self.handle.*.family_name);
+    return if (family.len == 0)
+        null
+    else
+        family;
+}
+
+pub fn styleFlags(self: Face) StyleFlags {
+    var flags = self.handle.*.style_flags;
+    return bitFieldsToStruct(StyleFlags, StyleFlags.Flag, flags);
+}
+
 pub fn deinit(self: Face) void {
     checkError(c.FT_Done_Face(self.handle)) catch |err| {
         std.log.err("mach/freetype: Failed to deinitialize Face: {}", .{err});
@@ -209,9 +307,40 @@ test "load glyph" {
 
     try face.loadChar('A', .{ .render = true });
     try face.glyph.render(.normal);
+}
+
+test "getters" {
+    var lib = try Library.init();
+    defer lib.deinit();
+
+    var face = try lib.newFace("src/test/ComicNeue.ttf", 0);
+    defer face.deinit();
 
     try testing.expectEqual(@as(u32, 36), face.getCharIndex('A').?);
-    _ = try face.getKerning(0, 0, .default);
+    try testing.expectEqual(Vector{ .x = 0, .y = 0 }, try face.getKerning(5, 50, .default));
+    try testing.expectEqual(true, face.hasHorizontal());
+    try testing.expectEqual(false, face.hasVertical());
+    try testing.expectEqual(false, face.hasKerning());
+    try testing.expectEqual(false, face.hasFixedSizes());
+    try testing.expectEqual(true, face.hasGlyphNames());
+    try testing.expectEqual(false, face.hasColor());
+    try testing.expectEqual(true, face.isScalable());
+    try testing.expectEqual(true, face.isSfnt());
+    try testing.expectEqual(false, face.isFixedWidth());
+    try testing.expectEqual(false, face.isCidKeyed());
+    try testing.expectEqual(false, face.isTricky());
+    try testing.expectEqual(@as(i16, 940), face.ascender());
+    try testing.expectEqual(@as(i16, -221), face.descender());
+    try testing.expectEqual(@as(u16, 1000), face.emSize());
+    try testing.expectEqual(@as(i16, 1161), face.height());
+    try testing.expectEqual(@as(i16, 1098), face.maxAdvanceWidth());
+    try testing.expectEqual(@as(i16, 1161), face.maxAdvanceHeight());
+    try testing.expectEqual(@as(i16, -150), face.underlinePosition());
+    try testing.expectEqual(@as(i16, 50), face.underlineThickness());
+    try testing.expectEqual(@as(i64, 1), face.numFaces());
+    try testing.expectEqual(@as(i64, 293), face.numGlyphs());
+    try testing.expectEqualStrings("Comic Neue", face.familyName().?);
+    try testing.expectEqual(StyleFlags{ .bold = false, .italic = false }, face.styleFlags());
 }
 
 test "attach file" {
@@ -242,12 +371,12 @@ test "transform" {
     var face = try lib.newFace("src/test/ComicNeue.ttf", 0);
     defer face.deinit();
 
-    var matrix = types.Matrix{
+    var matrix = Matrix{
         .xx = 1 * 0x10000,
         .xy = -1 * 0x10000,
         .yx = 1 * 0x10000,
         .yy = 1 * 0x10000,
     };
-    var delta = types.Vector{ .x = 1000, .y = 0 };
+    var delta = Vector{ .x = 1000, .y = 0 };
     try face.setTransform(&matrix, &delta);
 }

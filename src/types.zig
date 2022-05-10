@@ -1,17 +1,7 @@
 const std = @import("std");
 const c = @import("c.zig");
+const structToBitFields = @import("utils.zig").structToBitFields;
 const testing = std.testing;
-
-/// cast struct fields values to bit fields
-fn structFlagsToInt(comptime IntType: type, comptime StructType: type, comptime EnumDataType: type, flags: StructType) IntType {
-    var value: IntType = 0x0;
-    inline for (comptime std.meta.fieldNames(StructType)) |field_name| {
-        if (@field(flags, field_name)) {
-            value |= @enumToInt(@field(EnumDataType, field_name));
-        }
-    }
-    return value;
-}
 
 pub const Vector = extern struct {
     x: i64,
@@ -43,7 +33,7 @@ pub const GlyphMetrics = extern struct {
     vertAdvance: i32,
 };
 
-pub const LcdFilter = enum(u32) {
+pub const LcdFilter = enum(u5) {
     none = c.FT_LCD_FILTER_NONE,
     default = c.FT_LCD_FILTER_DEFAULT,
     light = c.FT_LCD_FILTER_LIGHT,
@@ -72,7 +62,7 @@ pub const LoadFlags = packed struct {
     target_lcd_v: bool = false,
     color: bool = false,
 
-    pub const Flag = enum(i32) {
+    pub const Flag = enum(u21) {
         no_scale = c.FT_LOAD_NO_SCALE,
         no_hinting = c.FT_LOAD_NO_HINTING,
         render = c.FT_LOAD_RENDER,
@@ -95,8 +85,8 @@ pub const LoadFlags = packed struct {
         color = c.FT_LOAD_COLOR,
     };
 
-    pub fn toInt(flags: LoadFlags) i32 {
-        return structFlagsToInt(i32, LoadFlags, Flag, flags);
+    pub fn toBitFields(flags: LoadFlags) u21 {
+        return @intCast(u21, structToBitFields(u21, Flag, flags));
     }
 };
 
@@ -107,7 +97,7 @@ pub const OpenFlags = packed struct {
     driver: bool = false,
     params: bool = false,
 
-    pub const Flag = enum(u16) {
+    pub const Flag = enum(u5) {
         memory = c.FT_OPEN_MEMORY,
         stream = c.FT_OPEN_STREAM,
         path = c.FT_OPEN_PATHNAME,
@@ -115,8 +105,8 @@ pub const OpenFlags = packed struct {
         params = c.FT_OPEN_PARAMS,
     };
 
-    pub fn toInt(flags: OpenFlags) u16 {
-        return structFlagsToInt(u16, OpenFlags, Flag, flags);
+    pub fn toBitFields(flags: OpenFlags) u5 {
+        return structToBitFields(u5, Flag, flags);
     }
 };
 
@@ -132,7 +122,7 @@ pub const OpenArgs = struct {
 
     pub fn toCInterface(self: OpenArgs) c.FT_Open_Args {
         var oa = std.mem.zeroes(c.FT_Open_Args);
-        oa.flags = self.flags.toInt();
+        oa.flags = self.flags.toBitFields();
         switch (self.data) {
             .memory => |d| {
                 oa.memory_base = d.ptr;
@@ -154,13 +144,13 @@ pub const StyleFlags = packed struct {
     bold: bool = false,
     italic: bool = false,
 
-    pub const Flag = enum(u8) {
+    pub const Flag = enum(u2) {
         bold = c.FT_STYLE_FLAG_BOLD,
         italic = c.FT_STYLE_FLAG_ITALIC,
     };
 
-    pub fn toInt(flags: StyleFlags) u8 {
-        return structFlagsToInt(u8, StyleFlags, Flag, flags);
+    pub fn toBitFields(flags: StyleFlags) u2 {
+        return structToBitFields(u2, StyleFlags, Flag, flags);
     }
 };
 
@@ -178,18 +168,3 @@ pub const RenderMode = enum(u3) {
     lcd_v = c.FT_RENDER_MODE_LCD_V,
     sdf = c.FT_RENDER_MODE_SDF,
 };
-
-test "load flags" {
-    try testing.expectEqual(c.FT_LOAD_CROP_BITMAP | c.FT_LOAD_NO_BITMAP, (LoadFlags{
-        .crop_bitmap = true,
-        .no_bitmap = true,
-    }).toInt());
-    try testing.expectEqual(c.FT_LOAD_DEFAULT, (LoadFlags{}).toInt());
-}
-
-test "open flags" {
-    try testing.expectEqual(c.FT_OPEN_MEMORY | c.FT_OPEN_PARAMS, (OpenFlags{
-        .memory = true,
-        .params = true,
-    }).toInt());
-}

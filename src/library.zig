@@ -26,20 +26,6 @@ pub fn deinit(self: Library) void {
     };
 }
 
-/// Returns the faces count of a font by its path
-pub fn facesCount(self: Library, path: []const u8) Error!u32 {
-    const face = try self.newFace(path, -1);
-    defer face.deinit();
-    return @intCast(u32, face.handle.*.num_faces);
-}
-
-/// Returns the faces count of a font from a bytes slice
-pub fn facesCountMemory(self: Library, bytes: []const u8) Error!u32 {
-    const face = try self.newFaceMemory(bytes, -1);
-    defer face.deinit();
-    return @intCast(u32, face.handle.*.num_faces);
-}
-
 /// Call `openFace` to open a font by its path.
 pub fn newFace(self: Library, path: []const u8, face_index: i32) Error!Face {
     return self.openFace(.{
@@ -88,16 +74,6 @@ pub fn newStroker(self: Library) Error!Stroker {
 /// `.render_mode_lcd` or `.render_mode_lcd_v` flags
 pub fn setLcdFilter(self: Library, lcd_filter: LcdFilter) Error!void {
     return checkError(c.FT_Library_SetLcdFilter(self.handle, @enumToInt(lcd_filter)));
-}
-
-test "get faces count" {
-    const lib = try init();
-    defer lib.deinit();
-
-    try testing.expectEqual(@as(u32, 1), try lib.facesCount("src/test/ComicNeue.ttf"));
-
-    var file = @embedFile("test/ComicNeue.ttf");
-    try testing.expectEqual(@as(u32, 1), try lib.facesCountMemory(file));
 }
 
 test "create face from file" {
