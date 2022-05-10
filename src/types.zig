@@ -1,7 +1,6 @@
 const std = @import("std");
 const c = @import("c.zig");
-const structToBitFields = @import("utils.zig").structToBitFields;
-const testing = std.testing;
+const utils = @import("utils.zig");
 
 pub const Vector = extern struct {
     x: i64,
@@ -105,7 +104,7 @@ pub const LoadFlags = packed struct {
     };
 
     pub fn toBitFields(flags: LoadFlags) u21 {
-        return @intCast(u21, structToBitFields(u21, Flag, flags));
+        return utils.structToBitFields(u21, Flag, flags);
     }
 };
 
@@ -125,7 +124,7 @@ pub const OpenFlags = packed struct {
     };
 
     pub fn toBitFields(flags: OpenFlags) u5 {
-        return structToBitFields(u5, Flag, flags);
+        return utils.structToBitFields(u5, Flag, flags);
     }
 };
 
@@ -169,7 +168,7 @@ pub const StyleFlags = packed struct {
     };
 
     pub fn toBitFields(flags: StyleFlags) u2 {
-        return structToBitFields(u2, StyleFlags, Flag, flags);
+        return utils.structToBitFields(u2, StyleFlags, Flag, flags);
     }
 };
 

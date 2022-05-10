@@ -1,18 +1,11 @@
 const std = @import("std");
 const c = @import("c.zig");
+const types = @import("types.zig");
 const GlyphSlot = @import("glyph_slot.zig");
 const Library = @import("library.zig");
-const KerningMode = @import("types.zig").KerningMode;
-const StyleFlags = @import("types.zig").StyleFlags;
-const Matrix = @import("types.zig").Matrix;
-const Vector = @import("types.zig").Vector;
-const SizeMetrics = @import("types.zig").SizeMetrics;
-const LoadFlags = @import("types.zig").LoadFlags;
-const OpenArgs = @import("types.zig").OpenArgs;
 const Error = @import("error.zig").Error;
-const checkError = @import("error.zig").checkError;
+const convertError = @import("error.zig").convertError;
 const bitFieldsToStruct = @import("utils.zig").bitFieldsToStruct;
-const testing = std.testing;
 
 const Face = @This();
 
@@ -40,27 +33,27 @@ pub fn attachMemory(self: Face, bytes: []const u8) Error!void {
     });
 }
 
-pub fn attachStream(self: Face, args: OpenArgs) Error!void {
-    return checkError(c.FT_Attach_Stream(self.handle, &args.toCInterface()));
+pub fn attachStream(self: Face, args: types.OpenArgs) Error!void {
+    return convertError(c.FT_Attach_Stream(self.handle, &args.toCInterface()));
 }
 
 pub fn setCharSize(self: Face, pt_width: i32, pt_height: i32, horz_resolution: u16, vert_resolution: u16) Error!void {
-    return checkError(c.FT_Set_Char_Size(self.handle, pt_width, pt_height, horz_resolution, vert_resolution));
+    return convertError(c.FT_Set_Char_Size(self.handle, pt_width, pt_height, horz_resolution, vert_resolution));
 }
 
 pub fn setPixelSizes(self: Face, pixel_width: u32, pixel_height: u32) Error!void {
-    return checkError(c.FT_Set_Pixel_Sizes(self.handle, pixel_width, pixel_height));
+    return convertError(c.FT_Set_Pixel_Sizes(self.handle, pixel_width, pixel_height));
 }
 
-pub fn loadGlyph(self: Face, index: u32, flags: LoadFlags) Error!void {
-    return checkError(c.FT_Load_Glyph(self.handle, index, flags.toBitFields()));
+pub fn loadGlyph(self: Face, index: u32, flags: types.LoadFlags) Error!void {
+    return convertError(c.FT_Load_Glyph(self.handle, index, flags.toBitFields()));
 }
 
-pub fn loadChar(self: Face, char: u32, flags: LoadFlags) Error!void {
-    return checkError(c.FT_Load_Char(self.handle, char, flags.toBitFields()));
+pub fn loadChar(self: Face, char: u32, flags: types.LoadFlags) Error!void {
+    return convertError(c.FT_Load_Char(self.handle, char, flags.toBitFields()));
 }
 
-pub fn setTransform(self: Face, matrix: Matrix, delta: Vector) Error!void {
+pub fn setTransform(self: Face, matrix: types.Matrix, delta: types.Vector) Error!void {
     return c.FT_Set_Transform(self.handle, @intToPtr([*c]c.FT_Matrix, @ptrToInt(&matrix)), @intToPtr([*c]c.FT_Vector, @ptrToInt(&delta)));
 }
 
@@ -69,9 +62,9 @@ pub fn getCharIndex(self: Face, index: u32) ?u32 {
     return if (i == 0) null else i;
 }
 
-pub fn getKerning(self: Face, left_char_index: u32, right_char_index: u32, mode: KerningMode) Error!Vector {
-    var vec = std.mem.zeroes(Vector);
-    try checkError(c.FT_Get_Kerning(self.handle, left_char_index, right_char_index, @enumToInt(mode), @ptrCast([*c]c.FT_Vector, &vec)));
+pub fn getKerning(self: Face, left_char_index: u32, right_char_index: u32, mode: types.KerningMode) Error!types.Vector {
+    var vec = std.mem.zeroes(types.Vector);
+    try convertError(c.FT_Get_Kerning(self.handle, left_char_index, right_char_index, @enumToInt(mode), @ptrCast([*c]c.FT_Vector, &vec)));
     return vec;
 }
 
@@ -175,17 +168,17 @@ pub fn styleName(self: Face) ?[:0]const u8 {
         std.mem.span(style);
 }
 
-pub fn styleFlags(self: Face) StyleFlags {
+pub fn styleFlags(self: Face) types.StyleFlags {
     var flags = self.handle.*.style_flags;
-    return bitFieldsToStruct(StyleFlags, StyleFlags.Flag, flags);
+    return bitFieldsToStruct(types.StyleFlags, types.StyleFlags.Flag, flags);
 }
 
-pub fn sizeMetrics(self: Face) ?SizeMetrics {
+pub fn sizeMetrics(self: Face) ?types.SizeMetrics {
     var size = self.handle.*.size;
     return if (size == null)
         null
     else
-        @ptrCast(*SizeMetrics, &size.*.metrics).*;
+        @ptrCast(*types.SizeMetrics, &size.*.metrics).*;
 }
 
 pub fn postscriptName(self: Face) ?[:0]const u8 {
@@ -197,7 +190,7 @@ pub fn postscriptName(self: Face) ?[:0]const u8 {
 }
 
 pub fn deinit(self: Face) void {
-    checkError(c.FT_Done_Face(self.handle)) catch |err| {
+    convertError(c.FT_Done_Face(self.handle)) catch |err| {
         std.log.err("mach/freetype: Failed to deinitialize Face: {}", .{err});
     };
 }
@@ -217,37 +210,40 @@ test "load glyph" {
 }
 
 test "getters" {
+    const expectEqual = std.testing.expectEqual;
+    const expectEqualStrings = std.testing.expectEqualStrings;
+
     var lib = try Library.init();
     var face = try lib.newFace("assets/ComicNeue.ttf", 0);
 
-    try testing.expectEqual(@as(u32, 36), face.getCharIndex('A').?);
-    try testing.expectEqual(Vector{ .x = 0, .y = 0 }, try face.getKerning(5, 50, .default));
-    try testing.expectEqual(true, face.hasHorizontal());
-    try testing.expectEqual(false, face.hasVertical());
-    try testing.expectEqual(false, face.hasKerning());
-    try testing.expectEqual(false, face.hasFixedSizes());
-    try testing.expectEqual(true, face.hasGlyphNames());
-    try testing.expectEqual(false, face.hasColor());
-    try testing.expectEqual(true, face.isScalable());
-    try testing.expectEqual(true, face.isSfnt());
-    try testing.expectEqual(false, face.isFixedWidth());
-    try testing.expectEqual(false, face.isCidKeyed());
-    try testing.expectEqual(false, face.isTricky());
-    try testing.expectEqual(@as(i16, 940), face.ascender());
-    try testing.expectEqual(@as(i16, -221), face.descender());
-    try testing.expectEqual(@as(u16, 1000), face.emSize());
-    try testing.expectEqual(@as(i16, 1161), face.height());
-    try testing.expectEqual(@as(i16, 1098), face.maxAdvanceWidth());
-    try testing.expectEqual(@as(i16, 1161), face.maxAdvanceHeight());
-    try testing.expectEqual(@as(i16, -150), face.underlinePosition());
-    try testing.expectEqual(@as(i16, 50), face.underlineThickness());
-    try testing.expectEqual(@as(i64, 1), face.numFaces());
-    try testing.expectEqual(@as(i64, 293), face.numGlyphs());
-    try testing.expectEqualStrings("Comic Neue", face.familyName().?);
-    try testing.expectEqualStrings("Regular", face.styleName().?);
-    try testing.expectEqual(StyleFlags{ .bold = false, .italic = false }, face.styleFlags());
-    try testing.expectEqual(std.mem.zeroes(SizeMetrics), face.sizeMetrics().?);
-    try testing.expectEqualStrings("ComicNeue", face.postscriptName().?);
+    try expectEqual(@as(u32, 36), face.getCharIndex('A').?);
+    try expectEqual(types.Vector{ .x = 0, .y = 0 }, try face.getKerning(5, 50, .default));
+    try expectEqual(true, face.hasHorizontal());
+    try expectEqual(false, face.hasVertical());
+    try expectEqual(false, face.hasKerning());
+    try expectEqual(false, face.hasFixedSizes());
+    try expectEqual(true, face.hasGlyphNames());
+    try expectEqual(false, face.hasColor());
+    try expectEqual(true, face.isScalable());
+    try expectEqual(true, face.isSfnt());
+    try expectEqual(false, face.isFixedWidth());
+    try expectEqual(false, face.isCidKeyed());
+    try expectEqual(false, face.isTricky());
+    try expectEqual(@as(i16, 940), face.ascender());
+    try expectEqual(@as(i16, -221), face.descender());
+    try expectEqual(@as(u16, 1000), face.emSize());
+    try expectEqual(@as(i16, 1161), face.height());
+    try expectEqual(@as(i16, 1098), face.maxAdvanceWidth());
+    try expectEqual(@as(i16, 1161), face.maxAdvanceHeight());
+    try expectEqual(@as(i16, -150), face.underlinePosition());
+    try expectEqual(@as(i16, 50), face.underlineThickness());
+    try expectEqual(@as(i64, 1), face.numFaces());
+    try expectEqual(@as(i64, 293), face.numGlyphs());
+    try expectEqual(types.StyleFlags{ .bold = false, .italic = false }, face.styleFlags());
+    try expectEqual(std.mem.zeroes(types.SizeMetrics), face.sizeMetrics().?);
+    try expectEqualStrings("Comic Neue", face.familyName().?);
+    try expectEqualStrings("Regular", face.styleName().?);
+    try expectEqualStrings("ComicNeue", face.postscriptName().?);
 }
 
 test "attach file" {
@@ -266,12 +262,12 @@ test "attach memory" {
 test "transform" {
     var lib = try Library.init();
     var face = try lib.newFace("assets/ComicNeue.ttf", 0);
-    var matrix = Matrix{
+    var matrix = types.Matrix{
         .xx = 1 * 0x10000,
         .xy = -1 * 0x10000,
         .yx = 1 * 0x10000,
         .yy = 1 * 0x10000,
     };
-    var delta = Vector{ .x = 1000, .y = 0 };
+    var delta = types.Vector{ .x = 1000, .y = 0 };
     try face.setTransform(matrix, delta);
 }

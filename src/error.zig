@@ -1,4 +1,3 @@
-const testing = @import("std").testing;
 const c = @import("c.zig");
 
 pub const Error = error{
@@ -93,7 +92,7 @@ pub const Error = error{
     CorruptedFontGlyphs,
 };
 
-pub fn checkError(err: c_int) Error!void {
+pub fn convertError(err: c_int) Error!void {
     return switch (err) {
         c.FT_Err_Ok => {},
         c.FT_Err_Cannot_Open_Resource => Error.CannotOpenResource,
@@ -190,6 +189,8 @@ pub fn checkError(err: c_int) Error!void {
 }
 
 test "error convertion" {
-    try checkError(c.FT_Err_Ok);
-    try testing.expectError(Error.OutOfMemory, checkError(c.FT_Err_Out_Of_Memory));
+    const expectError = @import("std").testing.expectError;
+
+    try convertError(c.FT_Err_Ok);
+    try expectError(Error.OutOfMemory, convertError(c.FT_Err_Out_Of_Memory));
 }
