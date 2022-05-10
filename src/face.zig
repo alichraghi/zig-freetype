@@ -204,10 +204,7 @@ pub fn deinit(self: Face) void {
 
 test "load glyph" {
     var lib = try Library.init();
-    defer lib.deinit();
-
-    var face = try lib.newFace("src/test/ComicNeue.ttf", 0);
-    defer face.deinit();
+    var face = try lib.newFace("assets/ComicNeue.ttf", 0);
 
     try face.setPixelSizes(100, 100);
     try face.setCharSize(40 * 64, 0, 50, 0);
@@ -221,10 +218,7 @@ test "load glyph" {
 
 test "getters" {
     var lib = try Library.init();
-    defer lib.deinit();
-
-    var face = try lib.newFace("src/test/ComicNeue.ttf", 0);
-    defer face.deinit();
+    var face = try lib.newFace("assets/ComicNeue.ttf", 0);
 
     try testing.expectEqual(@as(u32, 36), face.getCharIndex('A').?);
     try testing.expectEqual(Vector{ .x = 0, .y = 0 }, try face.getKerning(5, 50, .default));
@@ -258,32 +252,20 @@ test "getters" {
 
 test "attach file" {
     var lib = try Library.init();
-    defer lib.deinit();
-
-    var face = try lib.newFace("src/test/DejaVuSans.pfb", 0);
-    defer face.deinit();
-
-    try face.attachFile("src/test/DejaVuSans.pfm");
+    var face = try lib.newFace("assets/DejaVuSans.pfb", 0);
+    try face.attachFile("assets/DejaVuSans.pfm");
 }
 
 test "attach memory" {
     var lib = try Library.init();
-    defer lib.deinit();
-
-    var face = try lib.newFace("src/test/DejaVuSans.pfb", 0);
-    defer face.deinit();
-
-    const file = @embedFile("test/DejaVuSans.pfm");
+    var face = try lib.newFace("assets/DejaVuSans.pfb", 0);
+    const file = @embedFile("../assets/DejaVuSans.pfm");
     try face.attachMemory(file);
 }
 
 test "transform" {
     var lib = try Library.init();
-    defer lib.deinit();
-
-    var face = try lib.newFace("src/test/ComicNeue.ttf", 0);
-    defer face.deinit();
-
+    var face = try lib.newFace("assets/ComicNeue.ttf", 0);
     var matrix = Matrix{
         .xx = 1 * 0x10000,
         .xy = -1 * 0x10000,

@@ -58,33 +58,21 @@ pub fn setLcdFilter(self: Library, lcd_filter: LcdFilter) Error!void {
 
 test "create face from file" {
     const lib = try init();
-    defer lib.deinit();
-
-    var face = try lib.newFace("src/test/ComicNeue.ttf", 0);
-    defer face.deinit();
+    _ = try lib.newFace("assets/ComicNeue.ttf", 0);
 }
 
 test "create face from memory" {
     const lib = try init();
-    defer lib.deinit();
-
-    var file = @embedFile("test/ComicNeue.ttf");
-
-    var face = try lib.newFaceMemory(file, 0);
-    defer face.deinit();
+    var file = @embedFile("../assets/ComicNeue.ttf");
+    _ = try lib.newFaceMemory(file, 0);
 }
 
 test "create stroker" {
     var lib = try init();
-    defer lib.deinit();
-
-    var stroker = try lib.newStroker();
-    defer stroker.deinit();
+    _ = try lib.newStroker();
 }
 
 test "set lcd filter and weights" {
     var lib = try init();
-    defer lib.deinit();
-
     try lib.setLcdFilter(.default);
 }

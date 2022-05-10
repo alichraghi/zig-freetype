@@ -44,6 +44,14 @@ pub const GlyphMetrics = extern struct {
     vertAdvance: i32,
 };
 
+pub const SubGlyphInfo = struct {
+    index: i32,
+    flags: u32,
+    arg1: i32,
+    arg2: i32,
+    transform: Matrix,
+};
+
 pub const LcdFilter = enum(u5) {
     none = c.FT_LCD_FILTER_NONE,
     default = c.FT_LCD_FILTER_DEFAULT,

@@ -8,6 +8,8 @@ test {
     const refAllDecls = @import("std").testing.refAllDecls;
     refAllDecls(@import("error.zig"));
     refAllDecls(@import("face.zig"));
+    refAllDecls(@import("outline.zig"));
+    refAllDecls(@import("glyph.zig"));
     refAllDecls(@import("glyph_slot.zig"));
     refAllDecls(@import("stroker.zig"));
     refAllDecls(@import("types.zig"));
