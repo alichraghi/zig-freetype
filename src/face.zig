@@ -9,6 +9,7 @@ const KerningMode = @import("types.zig").KerningMode;
 const StyleFlags = @import("types.zig").StyleFlags;
 const Matrix = @import("types.zig").Matrix;
 const Vector = @import("types.zig").Vector;
+const SizeMetrics = @import("types.zig").SizeMetrics;
 const LoadFlags = @import("types.zig").LoadFlags;
 const OpenArgs = @import("types.zig").OpenArgs;
 const testing = std.testing;
@@ -59,8 +60,8 @@ pub fn loadChar(self: Face, char: u32, flags: LoadFlags) Error!void {
     return checkError(c.FT_Load_Char(self.handle, char, flags.toBitFields()));
 }
 
-pub fn setTransform(self: Face, matrix: *Matrix, delta: *Vector) Error!void {
-    return c.FT_Set_Transform(self.handle, @ptrCast([*c]c.FT_Matrix, matrix), @ptrCast([*c]c.FT_Vector, delta));
+pub fn setTransform(self: Face, matrix: Matrix, delta: Vector) Error!void {
+    return c.FT_Set_Transform(self.handle, @intToPtr([*c]c.FT_Matrix, @ptrToInt(&matrix)), @intToPtr([*c]c.FT_Vector, @ptrToInt(&delta)));
 }
 
 pub fn getCharIndex(self: Face, index: u32) ?u32 {
@@ -159,16 +160,40 @@ pub fn numGlyphs(self: Face) i64 {
 }
 
 pub fn familyName(self: Face) ?[:0]const u8 {
-    var family = std.mem.span(self.handle.*.family_name);
-    return if (family.len == 0)
+    var family = self.handle.*.family_name;
+    return if (family == null)
         null
     else
-        family;
+        std.mem.span(family);
+}
+
+pub fn styleName(self: Face) ?[:0]const u8 {
+    var style = self.handle.*.style_name;
+    return if (style == null)
+        null
+    else
+        std.mem.span(style);
 }
 
 pub fn styleFlags(self: Face) StyleFlags {
     var flags = self.handle.*.style_flags;
     return bitFieldsToStruct(StyleFlags, StyleFlags.Flag, flags);
+}
+
+pub fn sizeMetrics(self: Face) ?SizeMetrics {
+    var size = self.handle.*.size;
+    return if (size == null)
+        null
+    else
+        @ptrCast(*SizeMetrics, &size.*.metrics).*;
+}
+
+pub fn postscriptName(self: Face) ?[:0]const u8 {
+    var face_name = c.FT_Get_Postscript_Name(self.handle);
+    return if (face_name == null)
+        null
+    else
+        std.mem.span(face_name);
 }
 
 pub fn deinit(self: Face) void {
@@ -225,7 +250,10 @@ test "getters" {
     try testing.expectEqual(@as(i64, 1), face.numFaces());
     try testing.expectEqual(@as(i64, 293), face.numGlyphs());
     try testing.expectEqualStrings("Comic Neue", face.familyName().?);
+    try testing.expectEqualStrings("Regular", face.styleName().?);
     try testing.expectEqual(StyleFlags{ .bold = false, .italic = false }, face.styleFlags());
+    try testing.expectEqual(std.mem.zeroes(SizeMetrics), face.sizeMetrics().?);
+    try testing.expectEqualStrings("ComicNeue", face.postscriptName().?);
 }
 
 test "attach file" {
@@ -263,5 +291,5 @@ test "transform" {
         .yy = 1 * 0x10000,
     };
     var delta = Vector{ .x = 1000, .y = 0 };
-    try face.setTransform(&matrix, &delta);
+    try face.setTransform(matrix, delta);
 }

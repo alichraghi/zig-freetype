@@ -22,6 +22,17 @@ pub const BBox = extern struct {
     yMax: i64,
 };
 
+pub const SizeMetrics = extern struct {
+    x_ppem: u16,
+    y_ppem: u16,
+    x_scale: i32,
+    y_scale: i32,
+    ascender: i32,
+    descender: i32,
+    height: i32,
+    max_advance: i32,
+};
+
 pub const GlyphMetrics = extern struct {
     width: i32,
     height: i32,
