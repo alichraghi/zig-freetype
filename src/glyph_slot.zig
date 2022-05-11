@@ -32,8 +32,8 @@ pub fn glyph(self: GlyphSlot) Error!Glyph {
 }
 
 pub fn outline(self: GlyphSlot) ?Outline {
-    var out = self.handle.*.outline;
-    var format = self.handle.*.format;
+    const out = self.handle.*.outline;
+    const format = self.handle.*.format;
 
     return if (format == c.FT_GLYPH_FORMAT_OUTLINE)
         Outline.init(out)
@@ -74,8 +74,8 @@ test "glyph slot" {
     const expect = std.testing.expect;
     const expectError = std.testing.expectError;
 
-    var lib = try Library.init();
-    var face = try lib.newFace("assets/ComicNeue.ttf", 0);
+    const lib = try Library.init();
+    const face = try lib.newFace("assets/ComicNeue.ttf", 0);
 
     try face.setCharSize(10 * 10, 0, 72, 0);
     try face.loadChar('A', .{ .render = true });

@@ -11,16 +11,16 @@ const WIDTH: usize = 32;
 const HEIGHT: usize = 24;
 
 fn drawBitmap(bitmap: Bitmap, x: usize, y: usize) [HEIGHT][WIDTH]u8 {
-    var figure = std.mem.zeroes([HEIGHT][WIDTH]u8);
-    var p: usize = 0;
-    var q: usize = 0;
-    var w = bitmap.width();
-    var x_max = x + w;
-    var y_max = y + bitmap.rows();
+    const figure = std.mem.zeroes([HEIGHT][WIDTH]u8);
+    const p: usize = 0;
+    const q: usize = 0;
+    const w = bitmap.width();
+    const x_max = x + w;
+    const y_max = y + bitmap.rows();
 
-    var i: usize = 0;
+    const i: usize = 0;
     while (i < x_max - x) : (i += 1) {
-        var j: usize = 0;
+        const j: usize = 0;
         while (j < y_max - y) : (j += 1) {
             if (i < WIDTH and j < HEIGHT) {
                 figure[j][i] |= bitmap.buffer()[q * w + p];
@@ -36,22 +36,22 @@ fn drawBitmap(bitmap: Bitmap, x: usize, y: usize) [HEIGHT][WIDTH]u8 {
 test "draw single glyph" {
     return error.SkipZigTest;
 
-    // var lib = try Library.init();
+    // const lib = try Library.init();
     // defer lib.deinit();
-    // var face = try lib.newFace("assets/FiraSans-Regular.ttf", 0);
+    // const face = try lib.newFace("assets/FiraSans-Regular.ttf", 0);
     // defer face.deinit();
     // try face.setCharSize(40 * 64, 0, 50, 0);
     // try face.loadChar('@', .{ .render = true });
-    // var glyph = face.glyph;
-    // var x: usize = @intCast(usize, glyph.bitmapLeft());
-    // var y = HEIGHT - @intCast(usize, glyph.bitmapTop());
-    // var figure = drawBitmap(glyph.bitmap(), x, y);
+    // const glyph = face.glyph;
+    // const x: usize = @intCast(usize, glyph.bitmapLeft());
+    // const y = HEIGHT - @intCast(usize, glyph.bitmapTop());
+    // const figure = drawBitmap(glyph.bitmap(), x, y);
 
-    // var i: usize = 0;
+    // const i: usize = 0;
     // while (i < HEIGHT) : (i += 1) {
-    //     var j: usize = 0;
+    //     const j: usize = 0;
     //     while (j < WIDTH) : (j += 1) {
-    //         var char: u8 = switch (figure[i][j]) {
+    //         const char: u8 = switch (figure[i][j]) {
     //             0 => ' ',
     //             1...128 => '*',
     //             else => '+',

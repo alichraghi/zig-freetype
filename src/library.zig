@@ -60,17 +60,17 @@ test "new face from file" {
 
 test "new face from memory" {
     const lib = try init();
-    var file = @embedFile("../assets/ComicNeue.ttf");
+    const file = @embedFile("../assets/ComicNeue.ttf");
     _ = try lib.newFaceMemory(file, 0);
 }
 
 test "new stroker" {
-    var lib = try init();
-    var stroker = try lib.newStroker();
+    const lib = try init();
+    const stroker = try lib.newStroker();
     stroker.deinit();
 }
 
 test "set lcd filter" {
-    var lib = try init();
+    const lib = try init();
     try lib.setLcdFilter(.default);
 }

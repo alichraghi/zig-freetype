@@ -58,7 +58,7 @@ pub fn setTransform(self: Face, matrix: types.Matrix, delta: types.Vector) Error
 }
 
 pub fn getCharIndex(self: Face, index: u32) ?u32 {
-    var i = c.FT_Get_Char_Index(self.handle, index);
+    const i = c.FT_Get_Char_Index(self.handle, index);
     return if (i == 0) null else i;
 }
 
@@ -153,7 +153,7 @@ pub fn numGlyphs(self: Face) i64 {
 }
 
 pub fn familyName(self: Face) ?[:0]const u8 {
-    var family = self.handle.*.family_name;
+    const family = self.handle.*.family_name;
     return if (family == null)
         null
     else
@@ -161,7 +161,7 @@ pub fn familyName(self: Face) ?[:0]const u8 {
 }
 
 pub fn styleName(self: Face) ?[:0]const u8 {
-    var style = self.handle.*.style_name;
+    const style = self.handle.*.style_name;
     return if (style == null)
         null
     else
@@ -169,12 +169,12 @@ pub fn styleName(self: Face) ?[:0]const u8 {
 }
 
 pub fn styleFlags(self: Face) types.StyleFlags {
-    var flags = self.handle.*.style_flags;
+    const flags = self.handle.*.style_flags;
     return bitFieldsToStruct(types.StyleFlags, types.StyleFlags.Flag, flags);
 }
 
 pub fn sizeMetrics(self: Face) ?types.SizeMetrics {
-    var size = self.handle.*.size;
+    const size = self.handle.*.size;
     return if (size == null)
         null
     else
@@ -182,7 +182,7 @@ pub fn sizeMetrics(self: Face) ?types.SizeMetrics {
 }
 
 pub fn postscriptName(self: Face) ?[:0]const u8 {
-    var face_name = c.FT_Get_Postscript_Name(self.handle);
+    const face_name = c.FT_Get_Postscript_Name(self.handle);
     return if (face_name == null)
         null
     else
@@ -196,8 +196,8 @@ pub fn deinit(self: Face) void {
 }
 
 test "load glyph" {
-    var lib = try Library.init();
-    var face = try lib.newFace("assets/ComicNeue.ttf", 0);
+    const lib = try Library.init();
+    const face = try lib.newFace("assets/ComicNeue.ttf", 0);
 
     try face.setPixelSizes(100, 100);
     try face.setCharSize(10 * 10, 0, 72, 0);
@@ -212,8 +212,8 @@ test "face getters" {
     const expectEqual = std.testing.expectEqual;
     const expectEqualStrings = std.testing.expectEqualStrings;
 
-    var lib = try Library.init();
-    var face = try lib.newFace("assets/ComicNeue.ttf", 0);
+    const lib = try Library.init();
+    const face = try lib.newFace("assets/ComicNeue.ttf", 0);
 
     try expectEqual(@as(u32, 36), face.getCharIndex('A').?);
     try expectEqual(types.Vector{ .x = 0, .y = 0 }, try face.getKerning(5, 50, .default));
@@ -246,27 +246,27 @@ test "face getters" {
 }
 
 test "attach file" {
-    var lib = try Library.init();
-    var face = try lib.newFace("assets/DejaVuSans.pfb", 0);
+    const lib = try Library.init();
+    const face = try lib.newFace("assets/DejaVuSans.pfb", 0);
     try face.attachFile("assets/DejaVuSans.pfm");
 }
 
 test "attach memory" {
-    var lib = try Library.init();
-    var face = try lib.newFace("assets/DejaVuSans.pfb", 0);
+    const lib = try Library.init();
+    const face = try lib.newFace("assets/DejaVuSans.pfb", 0);
     const file = @embedFile("../assets/DejaVuSans.pfm");
     try face.attachMemory(file);
 }
 
 test "transform" {
-    var lib = try Library.init();
-    var face = try lib.newFace("assets/ComicNeue.ttf", 0);
-    var matrix = types.Matrix{
+    const lib = try Library.init();
+    const face = try lib.newFace("assets/ComicNeue.ttf", 0);
+    const matrix = types.Matrix{
         .xx = 1 * 0x10000,
         .xy = -1 * 0x10000,
         .yx = 1 * 0x10000,
         .yy = 1 * 0x10000,
     };
-    var delta = types.Vector{ .x = 1000, .y = 0 };
+    const delta = types.Vector{ .x = 1000, .y = 0 };
     try face.setTransform(matrix, delta);
 }
