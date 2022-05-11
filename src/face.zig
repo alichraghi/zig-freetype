@@ -204,6 +204,8 @@ test "load glyph" {
 
     try face.loadGlyph(205, .{});
     try face.loadChar('A', .{});
+
+    face.deinit();
 }
 
 test "face getters" {

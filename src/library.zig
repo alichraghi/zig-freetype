@@ -55,6 +55,7 @@ pub fn setLcdFilter(self: Library, lcd_filter: types.LcdFilter) Error!void {
 test "new face from file" {
     const lib = try init();
     _ = try lib.newFace("assets/ComicNeue.ttf", 0);
+    lib.deinit();
 }
 
 test "new face from memory" {
@@ -65,7 +66,8 @@ test "new face from memory" {
 
 test "new stroker" {
     var lib = try init();
-    _ = try lib.newStroker();
+    var stroker = try lib.newStroker();
+    stroker.deinit();
 }
 
 test "set lcd filter" {

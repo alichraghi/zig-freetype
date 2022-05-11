@@ -80,6 +80,8 @@ test "glyph slot" {
     try face.setCharSize(10 * 10, 0, 72, 0);
     try face.loadChar('A', .{ .render = true });
 
+    try face.glyph.render(types.RenderMode.normal);
+
     try expectError(Error.InvalidArgument, face.glyph.subGlyphInfo(0));
     try expect((try face.glyph.glyph()).handle != null);
     try expect(face.glyph.outline() == null);

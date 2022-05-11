@@ -144,7 +144,7 @@ pub const OpenArgs = struct {
         switch (self.data) {
             .memory => |d| {
                 oa.memory_base = d.ptr;
-                oa.memory_size = @intCast(i32, d.len);
+                oa.memory_size = @truncate(u32, d.len);
             },
             .path => |*d| oa.pathname = @intToPtr(*u8, @ptrToInt(d.ptr)),
             .stream => |d| oa.stream = d,
