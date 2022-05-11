@@ -54,7 +54,7 @@ pub fn loadChar(self: Face, char: u32, flags: types.LoadFlags) Error!void {
 }
 
 pub fn setTransform(self: Face, matrix: types.Matrix, delta: types.Vector) Error!void {
-    return c.FT_Set_Transform(self.handle, @intToPtr([*c]c.FT_Matrix, @ptrToInt(&matrix)), @intToPtr([*c]c.FT_Vector, @ptrToInt(&delta)));
+    return c.FT_Set_Transform(self.handle, @intToPtr(*c.FT_Matrix, @ptrToInt(&matrix)), @intToPtr(*c.FT_Vector, @ptrToInt(&delta)));
 }
 
 pub fn getCharIndex(self: Face, index: u32) ?u32 {
@@ -64,7 +64,7 @@ pub fn getCharIndex(self: Face, index: u32) ?u32 {
 
 pub fn getKerning(self: Face, left_char_index: u32, right_char_index: u32, mode: types.KerningMode) Error!types.Vector {
     var vec = std.mem.zeroes(types.Vector);
-    try convertError(c.FT_Get_Kerning(self.handle, left_char_index, right_char_index, @enumToInt(mode), @ptrCast([*c]c.FT_Vector, &vec)));
+    try convertError(c.FT_Get_Kerning(self.handle, left_char_index, right_char_index, @enumToInt(mode), @ptrCast(*c.FT_Vector, &vec)));
     return vec;
 }
 
@@ -200,16 +200,13 @@ test "load glyph" {
     var face = try lib.newFace("assets/ComicNeue.ttf", 0);
 
     try face.setPixelSizes(100, 100);
-    try face.setCharSize(40 * 64, 0, 50, 0);
+    try face.setCharSize(10 * 10, 0, 72, 0);
 
     try face.loadGlyph(205, .{});
-    try face.glyph.render(.normal);
-
-    try face.loadChar('A', .{ .render = true });
-    try face.glyph.render(.normal);
+    try face.loadChar('A', .{});
 }
 
-test "getters" {
+test "face getters" {
     const expectEqual = std.testing.expectEqual;
     const expectEqualStrings = std.testing.expectEqualStrings;
 

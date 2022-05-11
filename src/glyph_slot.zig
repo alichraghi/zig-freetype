@@ -19,16 +19,16 @@ pub fn render(self: GlyphSlot, render_mode: types.RenderMode) Error!void {
     return convertError(c.FT_Render_Glyph(self.handle, @enumToInt(render_mode)));
 }
 
-pub fn getSubGlyphInfo(self: GlyphSlot, sub_index: u32) Error!types.SubGlyphInfo {
+pub fn subGlyphInfo(self: GlyphSlot, sub_index: u32) Error!types.SubGlyphInfo {
     var info = std.mem.zeroes(types.SubGlyphInfo);
-    try convertError(c.FT_Get_SubGlyph_Info(self.handle, sub_index, &info.index, &info.flags, &info.arg1, &info.arg2, @ptrCast([*c]c.FT_Matrix, &info.transform)));
+    try convertError(c.FT_Get_SubGlyph_Info(self.handle, sub_index, &info.index, &info.flags, &info.arg1, &info.arg2, @ptrCast(*c.FT_Matrix, &info.transform)));
     return info;
 }
 
-pub fn getGlyph(self: GlyphSlot) Error!Glyph {
-    var glyph = std.mem.zeroes(c.FT_Glyph);
-    try convertError(c.FT_Get_Glyph(self.handle, &glyph));
-    return Glyph.init(glyph);
+pub fn glyph(self: GlyphSlot) Error!Glyph {
+    var out = std.mem.zeroes(c.FT_Glyph);
+    try convertError(c.FT_Get_Glyph(self.handle, &out));
+    return Glyph.init(out);
 }
 
 pub fn outline(self: GlyphSlot) ?Outline {
@@ -67,4 +67,27 @@ pub fn advance(self: GlyphSlot) types.Vector {
 
 pub fn metrics(self: GlyphSlot) types.GlyphMetrics {
     return @ptrCast(*types.GlyphMetrics, &self.handle.*.metrics).*;
+}
+
+test "glyph slot" {
+    const Library = @import("library.zig");
+    const expect = std.testing.expect;
+    const expectError = std.testing.expectError;
+
+    var lib = try Library.init();
+    var face = try lib.newFace("assets/ComicNeue.ttf", 0);
+
+    try face.setCharSize(10 * 10, 0, 72, 0);
+    try face.loadChar('A', .{ .render = true });
+
+    try expectError(Error.InvalidArgument, face.glyph.subGlyphInfo(0));
+    try expect((try face.glyph.glyph()).handle != null);
+    try expect(face.glyph.outline() == null);
+    try expect(face.glyph.bitmap().width() > 0);
+    try expect(face.glyph.bitmapLeft() == 0);
+    try expect(face.glyph.bitmapTop() > 0);
+    try expect(face.glyph.linearHoriAdvance() > 0);
+    try expect(face.glyph.linearVertAdvance() > 0);
+    try expect(face.glyph.advance().x > 0);
+    try expect(face.glyph.metrics().width > 0);
 }

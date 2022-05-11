@@ -146,11 +146,11 @@ pub const OpenArgs = struct {
                 oa.memory_base = d.ptr;
                 oa.memory_size = @intCast(i32, d.len);
             },
-            .path => |*d| oa.pathname = @intToPtr([*c]u8, @ptrToInt(d.ptr)),
+            .path => |*d| oa.pathname = @intToPtr(*u8, @ptrToInt(d.ptr)),
             .stream => |d| oa.stream = d,
             .driver => |d| oa.driver = d,
             .params => |*d| {
-                oa.params = @intToPtr([*c]c.FT_Parameter, @ptrToInt(d.ptr));
+                oa.params = @intToPtr(*c.FT_Parameter, @ptrToInt(d.ptr));
                 oa.num_params = @intCast(i32, d.len);
             },
         }
