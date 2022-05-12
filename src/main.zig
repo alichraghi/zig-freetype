@@ -1,9 +1,9 @@
 pub usingnamespace @import("types.zig");
 pub const Error = @import("error.zig").Error;
-pub const Face = @import("face.zig");
-pub const Glyph = @import("glyph_slot.zig");
-pub const Library = @import("library.zig");
-pub const Bitmap = @import("bitmap.zig");
+pub const Face = @import("Face.zig");
+pub const Glyph = @import("GlyphSlot.zig");
+pub const Library = @import("Library.zig");
+pub const Bitmap = @import("Bitmap.zig");
 
 const std = @import("std");
 
@@ -64,12 +64,12 @@ test "draw single glyph" {
 
 test {
     std.testing.refAllDecls(@import("error.zig"));
-    std.testing.refAllDecls(@import("face.zig"));
-    std.testing.refAllDecls(@import("outline.zig"));
-    std.testing.refAllDecls(@import("glyph.zig"));
-    std.testing.refAllDecls(@import("glyph_slot.zig"));
-    std.testing.refAllDecls(@import("stroker.zig"));
+    std.testing.refAllDecls(@import("Face.zig"));
+    std.testing.refAllDecls(@import("Outline.zig"));
+    std.testing.refAllDecls(@import("Glyph.zig"));
+    std.testing.refAllDecls(@import("GlyphSlot.zig"));
+    std.testing.refAllDecls(@import("Stroker.zig"));
     std.testing.refAllDecls(@import("types.zig"));
-    std.testing.refAllDecls(@import("library.zig"));
-    std.testing.refAllDecls(@import("bitmap.zig"));
+    std.testing.refAllDecls(@import("Library.zig"));
+    std.testing.refAllDecls(@import("Bitmap.zig"));
 }

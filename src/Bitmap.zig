@@ -54,7 +54,7 @@ pub fn buffer(self: Bitmap) []u8 {
 }
 
 test "bitmap" {
-    const Library = @import("library.zig");
+    const Library = @import("Library.zig");
 
     const lib = try Library.init();
     const face = try lib.newFace("assets/ComicNeue.ttf", 0);

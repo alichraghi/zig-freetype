@@ -1,8 +1,8 @@
 const std = @import("std");
 const c = @import("c.zig");
 const types = @import("types.zig");
-const GlyphSlot = @import("glyph_slot.zig");
-const Library = @import("library.zig");
+const GlyphSlot = @import("GlyphSlot.zig");
+const Library = @import("Library.zig");
 const Error = @import("error.zig").Error;
 const convertError = @import("error.zig").convertError;
 const bitFieldsToStruct = @import("utils.zig").bitFieldsToStruct;
@@ -53,8 +53,10 @@ pub fn loadChar(self: Face, char: u32, flags: types.LoadFlags) Error!void {
     return convertError(c.FT_Load_Char(self.handle, char, flags.toBitFields()));
 }
 
-pub fn setTransform(self: Face, matrix: types.Matrix, delta: types.Vector) Error!void {
-    return c.FT_Set_Transform(self.handle, @intToPtr(*c.FT_Matrix, @ptrToInt(&matrix)), @intToPtr(*c.FT_Vector, @ptrToInt(&delta)));
+pub fn setTransform(self: Face, matrix: ?types.Matrix, delta: ?types.Vector) Error!void {
+    var m = matrix orelse std.mem.zeroes(types.Matrix);
+    var d = delta orelse std.mem.zeroes(types.Vector);
+    return c.FT_Set_Transform(self.handle, &m, &d);
 }
 
 pub fn getCharIndex(self: Face, index: u32) ?u32 {
@@ -64,7 +66,7 @@ pub fn getCharIndex(self: Face, index: u32) ?u32 {
 
 pub fn getKerning(self: Face, left_char_index: u32, right_char_index: u32, mode: types.KerningMode) Error!types.Vector {
     var vec = std.mem.zeroes(types.Vector);
-    try convertError(c.FT_Get_Kerning(self.handle, left_char_index, right_char_index, @enumToInt(mode), @ptrCast(*c.FT_Vector, &vec)));
+    try convertError(c.FT_Get_Kerning(self.handle, left_char_index, right_char_index, @enumToInt(mode), &vec));
     return vec;
 }
 

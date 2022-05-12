@@ -1,6 +1,6 @@
 # Zig binding of FreeType 2
 
-## Roadmap
+## TODO
 - [ ] clean stuff
 - [ ] review pointer/integer casts
 - [ ] reorganize tests

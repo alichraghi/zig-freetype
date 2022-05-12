@@ -1,8 +1,8 @@
 const std = @import("std");
 const c = @import("c.zig");
 const types = @import("types.zig");
-const Face = @import("face.zig");
-const Stroker = @import("stroker.zig");
+const Face = @import("Face.zig");
+const Stroker = @import("Stroker.zig");
 const Error = @import("error.zig").Error;
 const convertError = @import("error.zig").convertError;
 

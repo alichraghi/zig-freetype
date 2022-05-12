@@ -1,9 +1,9 @@
 const std = @import("std");
 const c = @import("c.zig");
 const types = @import("types.zig");
-const Glyph = @import("glyph.zig");
-const Outline = @import("outline.zig");
-const Bitmap = @import("bitmap.zig");
+const Glyph = @import("Glyph.zig");
+const Outline = @import("Outline.zig");
+const Bitmap = @import("Bitmap.zig");
 const Error = @import("error.zig").Error;
 const convertError = @import("error.zig").convertError;
 
@@ -70,7 +70,7 @@ pub fn metrics(self: GlyphSlot) types.GlyphMetrics {
 }
 
 test "glyph slot" {
-    const Library = @import("library.zig");
+    const Library = @import("Library.zig");
     const expect = std.testing.expect;
     const expectError = std.testing.expectError;
 
