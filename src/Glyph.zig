@@ -14,7 +14,13 @@ pub fn init(handle: c.FT_Glyph) Glyph {
     return Glyph{ .handle = handle };
 }
 
-pub fn copy(self: Glyph) Error!Glyph {
+pub fn deinit(self: Glyph) void {
+    convertError(c.FT_Done_Glyph(self.handle)) catch |err| {
+        std.log.err("mach/freetype: Failed to destroy Glyph: {}", .{err});
+    };
+}
+
+pub fn clone(self: Glyph) Error!Glyph {
     var res = std.mem.zeroes(c.FT_Glyph);
     try convertError(c.FT_Glyph_Copy(self.handle, &res));
     return Glyph.init(res);

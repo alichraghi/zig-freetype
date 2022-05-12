@@ -19,6 +19,12 @@ pub fn init(handle: c.FT_Face) Face {
     };
 }
 
+pub fn deinit(self: Face) void {
+    convertError(c.FT_Done_Face(self.handle)) catch |err| {
+        std.log.err("mach/freetype: Failed to destroy Face: {}", .{err});
+    };
+}
+
 pub fn attachFile(self: Face, path: []const u8) Error!void {
     return self.attachStream(.{
         .flags = .{ .path = true },
@@ -189,12 +195,6 @@ pub fn postscriptName(self: Face) ?[:0]const u8 {
         null
     else
         std.mem.span(face_name);
-}
-
-pub fn deinit(self: Face) void {
-    convertError(c.FT_Done_Face(self.handle)) catch |err| {
-        std.log.err("mach/freetype: Failed to deinitialize Face: {}", .{err});
-    };
 }
 
 test "load glyph" {

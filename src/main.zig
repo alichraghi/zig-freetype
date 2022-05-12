@@ -63,13 +63,15 @@ test "draw single glyph" {
 }
 
 test {
-    std.testing.refAllDecls(@import("error.zig"));
+    std.testing.refAllDecls(@import("Bitmap.zig"));
+    std.testing.refAllDecls(@import("BitmapGlyph.zig"));
     std.testing.refAllDecls(@import("Face.zig"));
-    std.testing.refAllDecls(@import("Outline.zig"));
     std.testing.refAllDecls(@import("Glyph.zig"));
     std.testing.refAllDecls(@import("GlyphSlot.zig"));
+    std.testing.refAllDecls(@import("Library.zig"));
+    std.testing.refAllDecls(@import("Outline.zig"));
     std.testing.refAllDecls(@import("Stroker.zig"));
     std.testing.refAllDecls(@import("types.zig"));
-    std.testing.refAllDecls(@import("Library.zig"));
-    std.testing.refAllDecls(@import("Bitmap.zig"));
+    std.testing.refAllDecls(@import("error.zig"));
+    std.testing.refAllDecls(@import("utils.zig"));
 }
