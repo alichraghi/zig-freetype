@@ -52,19 +52,3 @@ pub fn buffer(self: Bitmap) []u8 {
     const buffer_size = std.math.absCast(self.pitch()) * self.rows();
     return self.handle.buffer[0..buffer_size];
 }
-
-test "bitmap" {
-    const Library = @import("Library.zig");
-
-    const lib = try Library.init();
-    const face = try lib.newFace("assets/ComicNeue.ttf", 0);
-
-    try face.setCharSize(10 * 10, 0, 72, 0);
-    try face.loadChar('A', .{ .render = true });
-
-    try std.testing.expect(face.glyph.bitmap().width() > 0);
-    try std.testing.expect(face.glyph.bitmap().pitch() > 0);
-    try std.testing.expect(face.glyph.bitmap().rows() > 0);
-    try std.testing.expect(face.glyph.bitmap().pixelMode() == .gray);
-    try std.testing.expect(face.glyph.bitmap().buffer().len > 0);
-}

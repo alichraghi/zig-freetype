@@ -68,28 +68,3 @@ pub fn advance(self: GlyphSlot) types.Vector {
 pub fn metrics(self: GlyphSlot) types.GlyphMetrics {
     return @ptrCast(*types.GlyphMetrics, &self.handle.*.metrics).*;
 }
-
-test "glyph slot" {
-    const Library = @import("Library.zig");
-    const expect = std.testing.expect;
-    const expectError = std.testing.expectError;
-
-    const lib = try Library.init();
-    const face = try lib.newFace("assets/ComicNeue.ttf", 0);
-
-    try face.setCharSize(10 * 10, 0, 72, 0);
-    try face.loadChar('A', .{ .render = true });
-
-    try face.glyph.render(types.RenderMode.normal);
-
-    try expectError(Error.InvalidArgument, face.glyph.subGlyphInfo(0));
-    try expect((try face.glyph.glyph()).handle != null);
-    try expect(face.glyph.outline() == null);
-    try expect(face.glyph.bitmap().width() > 0);
-    try expect(face.glyph.bitmapLeft() == 0);
-    try expect(face.glyph.bitmapTop() > 0);
-    try expect(face.glyph.linearHoriAdvance() > 0);
-    try expect(face.glyph.linearVertAdvance() > 0);
-    try expect(face.glyph.advance().x > 0);
-    try expect(face.glyph.metrics().width > 0);
-}

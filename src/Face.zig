@@ -199,7 +199,7 @@ pub fn postscriptName(self: Face) ?[:0]const u8 {
 
 test "load glyph" {
     const lib = try Library.init();
-    const face = try lib.newFace("assets/ComicNeue.ttf", 0);
+    const face = try lib.newFace("assets/FiraSans-Regular.ttf", 0);
 
     try face.setPixelSizes(100, 100);
     try face.setCharSize(10 * 10, 0, 72, 0);
@@ -208,43 +208,6 @@ test "load glyph" {
     try face.loadChar('A', .{});
 
     face.deinit();
-}
-
-test "face getters" {
-    const expectEqual = std.testing.expectEqual;
-    const expectEqualStrings = std.testing.expectEqualStrings;
-
-    const lib = try Library.init();
-    const face = try lib.newFace("assets/ComicNeue.ttf", 0);
-
-    try expectEqual(@as(u32, 36), face.getCharIndex('A').?);
-    try expectEqual(types.Vector{ .x = 0, .y = 0 }, try face.getKerning(5, 50, .default));
-    try expectEqual(true, face.hasHorizontal());
-    try expectEqual(false, face.hasVertical());
-    try expectEqual(false, face.hasKerning());
-    try expectEqual(false, face.hasFixedSizes());
-    try expectEqual(true, face.hasGlyphNames());
-    try expectEqual(false, face.hasColor());
-    try expectEqual(true, face.isScalable());
-    try expectEqual(true, face.isSfnt());
-    try expectEqual(false, face.isFixedWidth());
-    try expectEqual(false, face.isCidKeyed());
-    try expectEqual(false, face.isTricky());
-    try expectEqual(@as(i16, 940), face.ascender());
-    try expectEqual(@as(i16, -221), face.descender());
-    try expectEqual(@as(u16, 1000), face.emSize());
-    try expectEqual(@as(i16, 1161), face.height());
-    try expectEqual(@as(i16, 1098), face.maxAdvanceWidth());
-    try expectEqual(@as(i16, 1161), face.maxAdvanceHeight());
-    try expectEqual(@as(i16, -150), face.underlinePosition());
-    try expectEqual(@as(i16, 50), face.underlineThickness());
-    try expectEqual(@as(i64, 1), face.numFaces());
-    try expectEqual(@as(i64, 293), face.numGlyphs());
-    try expectEqual(types.StyleFlags{ .bold = false, .italic = false }, face.styleFlags());
-    try expectEqual(std.mem.zeroes(types.SizeMetrics), face.sizeMetrics().?);
-    try expectEqualStrings("Comic Neue", face.familyName().?);
-    try expectEqualStrings("Regular", face.styleName().?);
-    try expectEqualStrings("ComicNeue", face.postscriptName().?);
 }
 
 test "attach file" {
@@ -258,17 +221,4 @@ test "attach memory" {
     const face = try lib.newFace("assets/DejaVuSans.pfb", 0);
     const file = @embedFile("../assets/DejaVuSans.pfm");
     try face.attachMemory(file);
-}
-
-test "transform" {
-    const lib = try Library.init();
-    const face = try lib.newFace("assets/ComicNeue.ttf", 0);
-    const matrix = types.Matrix{
-        .xx = 1 * 0x10000,
-        .xy = -1 * 0x10000,
-        .yx = 1 * 0x10000,
-        .yy = 1 * 0x10000,
-    };
-    const delta = types.Vector{ .x = 1000, .y = 0 };
-    try face.setTransform(matrix, delta);
 }
