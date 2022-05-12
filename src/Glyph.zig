@@ -15,9 +15,7 @@ pub fn init(handle: c.FT_Glyph) Glyph {
 }
 
 pub fn deinit(self: Glyph) void {
-    convertError(c.FT_Done_Glyph(self.handle)) catch |err| {
-        std.log.err("mach/freetype: Failed to destroy Glyph: {}", .{err});
-    };
+    c.FT_Done_Glyph(self.handle);
 }
 
 pub fn clone(self: Glyph) Error!Glyph {

@@ -12,10 +12,8 @@ pub fn init(handle: c.FT_BitmapGlyph) BitmapGlyph {
     return BitmapGlyph{ .handle = handle };
 }
 
-pub fn deinit(self: Glyph) void {
-    convertError(c.FT_Done_Glyph(self.handle)) catch |err| {
-        std.log.err("mach/freetype: Failed to destroy BitmapGlyph: {}", .{err});
-    };
+pub fn deinit(self: BitmapGlyph) void {
+    c.FT_Done_Glyph(@ptrCast(c.FT_Glyph, self.handle));
 }
 
 pub fn clone(self: BitmapGlyph) Error!BitmapGlyph {
