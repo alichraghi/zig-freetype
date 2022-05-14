@@ -13,8 +13,8 @@ pub usingnamespace @import("types.zig");
 const std = @import("std");
 
 test "draw single glyph" {
-    const WIDTH: usize = 32;
-    const HEIGHT: usize = 24;
+    const WIDTH = 32;
+    const HEIGHT = 24;
     const lib = try Library.init();
     defer lib.deinit();
 
@@ -25,7 +25,7 @@ test "draw single glyph" {
     try face.loadChar('@', .{ .render = true });
 
     const glyph = face.glyph;
-    const x: usize = @intCast(usize, glyph.bitmapLeft());
+    const x = @intCast(usize, glyph.bitmapLeft());
     const y = HEIGHT - @intCast(usize, glyph.bitmapTop());
 
     var figure = std.mem.zeroes([HEIGHT][WIDTH]u8);
@@ -59,7 +59,7 @@ test "draw single glyph" {
             while (j < WIDTH) : (j += 1) {
                 const char: u8 = switch (figure[i][j]) {
                     0 => ' ',
-                    1...128 => '+',
+                    1...128 => ';',
                     else => '#',
                 };
                 std.debug.print("{c}", .{char});

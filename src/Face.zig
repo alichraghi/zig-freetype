@@ -255,7 +255,7 @@ pub fn sizeMetrics(self: Face) ?SizeMetrics {
     return if (size == null)
         null
     else
-        @ptrCast(*SizeMetrics, &size.*.metrics).*;
+        size.*.metrics;
 }
 
 pub fn postscriptName(self: Face) ?[:0]const u8 {

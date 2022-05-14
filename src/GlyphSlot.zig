@@ -30,7 +30,7 @@ pub fn render(self: GlyphSlot, render_mode: Glyph.RenderMode) Error!void {
 
 pub fn subGlyphInfo(self: GlyphSlot, sub_index: u32) Error!SubGlyphInfo {
     var info = std.mem.zeroes(SubGlyphInfo);
-    try convertError(c.FT_Get_SubGlyph_Info(self.handle, sub_index, &info.index, &info.flags, &info.arg1, &info.arg2, @ptrCast(*c.FT_Matrix, &info.transform)));
+    try convertError(c.FT_Get_SubGlyph_Info(self.handle, sub_index, &info.index, &info.flags, &info.arg1, &info.arg2, &info.transform));
     return info;
 }
 
@@ -71,9 +71,9 @@ pub fn linearVertAdvance(self: GlyphSlot) i64 {
 }
 
 pub fn advance(self: GlyphSlot) types.Vector {
-    return @ptrCast(*types.Vector, &self.handle.*.advance).*;
+    return self.handle.*.advance;
 }
 
 pub fn metrics(self: GlyphSlot) GlyphMetrics {
-    return @ptrCast(*GlyphMetrics, &self.handle.*.metrics).*;
+    return self.handle.*.metrics;
 }

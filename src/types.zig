@@ -41,14 +41,14 @@ pub const OpenArgs = struct {
         switch (self.data) {
             .memory => |d| {
                 oa.memory_base = d.ptr;
-                oa.memory_size = @truncate(u32, d.len);
+                oa.memory_size = @truncate(u31, d.len);
             },
             .path => |*d| oa.pathname = @intToPtr(*u8, @ptrToInt(d.ptr)),
             .stream => |d| oa.stream = d,
             .driver => |d| oa.driver = d,
             .params => |*d| {
                 oa.params = @intToPtr(*c.FT_Parameter, @ptrToInt(d.ptr));
-                oa.num_params = @intCast(i32, d.len);
+                oa.num_params = @intCast(u31, d.len);
             },
         }
         return oa;
