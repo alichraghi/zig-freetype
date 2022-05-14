@@ -76,6 +76,7 @@ test "new stroker" {
 }
 
 test "set lcd filter" {
-    const lib = try init();
-    try lib.setLcdFilter(.default);
+    return error.SkipZigTest;
+    // const lib = try init();
+    // try lib.setLcdFilter(.default);
 }
