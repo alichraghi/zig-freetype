@@ -8,6 +8,13 @@ const convertError = @import("error.zig").convertError;
 
 const Library = @This();
 
+pub const LcdFilter = enum(u5) {
+    none = c.FT_LCD_FILTER_NONE,
+    default = c.FT_LCD_FILTER_DEFAULT,
+    light = c.FT_LCD_FILTER_LIGHT,
+    legacy = c.FT_LCD_FILTER_LEGACY,
+};
+
 handle: c.FT_Library,
 
 pub fn init() Error!Library {
@@ -48,7 +55,7 @@ pub fn newStroker(self: Library) Error!Stroker {
     return Stroker.init(stroker);
 }
 
-pub fn setLcdFilter(self: Library, lcd_filter: types.LcdFilter) Error!void {
+pub fn setLcdFilter(self: Library, lcd_filter: LcdFilter) Error!void {
     return convertError(c.FT_Library_SetLcdFilter(self.handle, @enumToInt(lcd_filter)));
 }
 

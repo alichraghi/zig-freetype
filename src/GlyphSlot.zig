@@ -9,18 +9,27 @@ const convertError = @import("error.zig").convertError;
 
 const GlyphSlot = @This();
 
+pub const GlyphMetrics = c.FT_Glyph_Metrics;
+pub const SubGlyphInfo = struct {
+    index: i32,
+    flags: u32,
+    arg1: i32,
+    arg2: i32,
+    transform: types.Matrix,
+};
+
 handle: c.FT_GlyphSlot,
 
 pub fn init(handle: c.FT_GlyphSlot) GlyphSlot {
     return GlyphSlot{ .handle = handle };
 }
 
-pub fn render(self: GlyphSlot, render_mode: types.RenderMode) Error!void {
+pub fn render(self: GlyphSlot, render_mode: Glyph.RenderMode) Error!void {
     return convertError(c.FT_Render_Glyph(self.handle, @enumToInt(render_mode)));
 }
 
-pub fn subGlyphInfo(self: GlyphSlot, sub_index: u32) Error!types.SubGlyphInfo {
-    var info = std.mem.zeroes(types.SubGlyphInfo);
+pub fn subGlyphInfo(self: GlyphSlot, sub_index: u32) Error!SubGlyphInfo {
+    var info = std.mem.zeroes(SubGlyphInfo);
     try convertError(c.FT_Get_SubGlyph_Info(self.handle, sub_index, &info.index, &info.flags, &info.arg1, &info.arg2, @ptrCast(*c.FT_Matrix, &info.transform)));
     return info;
 }
@@ -65,6 +74,6 @@ pub fn advance(self: GlyphSlot) types.Vector {
     return @ptrCast(*types.Vector, &self.handle.*.advance).*;
 }
 
-pub fn metrics(self: GlyphSlot) types.GlyphMetrics {
-    return @ptrCast(*types.GlyphMetrics, &self.handle.*.metrics).*;
+pub fn metrics(self: GlyphSlot) GlyphMetrics {
+    return @ptrCast(*GlyphMetrics, &self.handle.*.metrics).*;
 }

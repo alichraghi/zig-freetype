@@ -5,9 +5,78 @@ const GlyphSlot = @import("GlyphSlot.zig");
 const Library = @import("Library.zig");
 const Error = @import("error.zig").Error;
 const convertError = @import("error.zig").convertError;
-const bitFieldsToStruct = @import("utils.zig").bitFieldsToStruct;
+const utils = @import("utils.zig");
 
 const Face = @This();
+
+pub const SizeMetrics = c.FT_Size_Metrics;
+pub const KerningMode = enum(u2) {
+    default = c.FT_KERNING_DEFAULT,
+    unfitted = c.FT_KERNING_UNFITTED,
+    unscaled = c.FT_KERNING_UNSCALED,
+};
+pub const LoadFlags = packed struct {
+    no_scale: bool = false,
+    no_hinting: bool = false,
+    render: bool = false,
+    no_bitmap: bool = false,
+    vertical_layout: bool = false,
+    force_autohint: bool = false,
+    crop_bitmap: bool = false,
+    pedantic: bool = false,
+    ignore_global_advance_with: bool = false,
+    no_recurse: bool = false,
+    ignore_transform: bool = false,
+    monochrome: bool = false,
+    linear_design: bool = false,
+    no_autohint: bool = false,
+    target_normal: bool = false,
+    target_light: bool = false,
+    target_mono: bool = false,
+    target_lcd: bool = false,
+    target_lcd_v: bool = false,
+    color: bool = false,
+
+    pub const Flag = enum(u21) {
+        no_scale = c.FT_LOAD_NO_SCALE,
+        no_hinting = c.FT_LOAD_NO_HINTING,
+        render = c.FT_LOAD_RENDER,
+        no_bitmap = c.FT_LOAD_NO_BITMAP,
+        vertical_layout = c.FT_LOAD_VERTICAL_LAYOUT,
+        force_autohint = c.FT_LOAD_FORCE_AUTOHINT,
+        crop_bitmap = c.FT_LOAD_CROP_BITMAP,
+        pedantic = c.FT_LOAD_PEDANTIC,
+        ignore_global_advance_with = c.FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH,
+        no_recurse = c.FT_LOAD_NO_RECURSE,
+        ignore_transform = c.FT_LOAD_IGNORE_TRANSFORM,
+        monochrome = c.FT_LOAD_MONOCHROME,
+        linear_design = c.FT_LOAD_LINEAR_DESIGN,
+        no_autohint = c.FT_LOAD_NO_AUTOHINT,
+        target_normal = c.FT_LOAD_TARGET_NORMAL,
+        target_light = c.FT_LOAD_TARGET_LIGHT,
+        target_mono = c.FT_LOAD_TARGET_MONO,
+        target_lcd = c.FT_LOAD_TARGET_LCD,
+        target_lcd_v = c.FT_LOAD_TARGET_LCD_V,
+        color = c.FT_LOAD_COLOR,
+    };
+
+    pub fn toBitFields(flags: LoadFlags) u21 {
+        return utils.structToBitFields(u21, Flag, flags);
+    }
+};
+pub const StyleFlags = packed struct {
+    bold: bool = false,
+    italic: bool = false,
+
+    pub const Flag = enum(u2) {
+        bold = c.FT_STYLE_FLAG_BOLD,
+        italic = c.FT_STYLE_FLAG_ITALIC,
+    };
+
+    pub fn toBitFields(flags: StyleFlags) u2 {
+        return utils.structToBitFields(u2, StyleFlags, Flag, flags);
+    }
+};
 
 handle: c.FT_Face,
 glyph: GlyphSlot,
@@ -51,11 +120,11 @@ pub fn setPixelSizes(self: Face, pixel_width: u32, pixel_height: u32) Error!void
     return convertError(c.FT_Set_Pixel_Sizes(self.handle, pixel_width, pixel_height));
 }
 
-pub fn loadGlyph(self: Face, index: u32, flags: types.LoadFlags) Error!void {
+pub fn loadGlyph(self: Face, index: u32, flags: LoadFlags) Error!void {
     return convertError(c.FT_Load_Glyph(self.handle, index, flags.toBitFields()));
 }
 
-pub fn loadChar(self: Face, char: u32, flags: types.LoadFlags) Error!void {
+pub fn loadChar(self: Face, char: u32, flags: LoadFlags) Error!void {
     return convertError(c.FT_Load_Char(self.handle, char, flags.toBitFields()));
 }
 
@@ -70,7 +139,7 @@ pub fn getCharIndex(self: Face, index: u32) ?u32 {
     return if (i == 0) null else i;
 }
 
-pub fn getKerning(self: Face, left_char_index: u32, right_char_index: u32, mode: types.KerningMode) Error!types.Vector {
+pub fn getKerning(self: Face, left_char_index: u32, right_char_index: u32, mode: KerningMode) Error!types.Vector {
     var vec = std.mem.zeroes(types.Vector);
     try convertError(c.FT_Get_Kerning(self.handle, left_char_index, right_char_index, @enumToInt(mode), &vec));
     return vec;
@@ -176,17 +245,17 @@ pub fn styleName(self: Face) ?[:0]const u8 {
         std.mem.span(style);
 }
 
-pub fn styleFlags(self: Face) types.StyleFlags {
+pub fn styleFlags(self: Face) StyleFlags {
     const flags = self.handle.*.style_flags;
-    return bitFieldsToStruct(types.StyleFlags, types.StyleFlags.Flag, flags);
+    return utils.bitFieldsToStruct(StyleFlags, StyleFlags.Flag, flags);
 }
 
-pub fn sizeMetrics(self: Face) ?types.SizeMetrics {
+pub fn sizeMetrics(self: Face) ?SizeMetrics {
     const size = self.handle.*.size;
     return if (size == null)
         null
     else
-        @ptrCast(*types.SizeMetrics, &size.*.metrics).*;
+        @ptrCast(*SizeMetrics, &size.*.metrics).*;
 }
 
 pub fn postscriptName(self: Face) ?[:0]const u8 {
