@@ -1,7 +1,5 @@
 const std = @import("std");
 
-const freetype_dir = thisDir() ++ "/upstream/freetype";
-
 pub const Options = struct {
     // support of bzip2 compressed fonts
     bzip2: bool = false,
@@ -11,51 +9,74 @@ pub const Options = struct {
     harfbuzz: bool = false,
     // support of compressed WOFF2 fonts
     brotli: bool = false,
+    // lcd rendering support
+    lcd_rendering: bool = true,
 };
 
 fn thisDir() []const u8 {
     return std.fs.path.dirname(@src().file) orelse ".";
 }
 
-fn translateHeaders(b: *std.build.Builder, include_dir: ?[]const u8) void {
-    const c_translate = b.addTranslateC(.{ .path = thisDir() ++ "/src/c.c" });
-    if (include_dir) |dir| {
-        c_translate.addIncludeDir(dir);
-    }
-    c_translate.output_dir = thisDir() ++ "/src";
-    c_translate.out_basename = "c.zig";
-    c_translate.step.make() catch unreachable;
-}
+fn buildFreeType(b: *std.build.Builder, mode: std.builtin.Mode, target: std.zig.CrossTarget, options: Options) !*std.build.LibExeObjStep {
+    const upstream_dir = thisDir() ++ "/upstream/freetype";
 
-fn buildFreeType(b: *std.build.Builder, mode: std.builtin.Mode, target: std.zig.CrossTarget, comptime base_dir: []const u8, _: Options) *std.build.LibExeObjStep {
-    const main_abs = std.fs.path.join(b.allocator, &.{ base_dir, "/src/base/ftbase.c" }) catch unreachable;
-    const lib = b.addStaticLibrary("freetype", main_abs);
+    const lib = b.addStaticLibrary("freetype", upstream_dir ++ "/src/base/ftbase.c");
     lib.defineCMacro("FT2_BUILD_LIBRARY", "1");
-    lib.defineCMacro("HAVE_UNISTD_H", "1");
-    lib.defineCMacro("HAVE_FCNTL_H", "1");
     lib.setBuildMode(mode);
     lib.setTarget(target);
     lib.linkLibC();
+    lib.addIncludePath(upstream_dir ++ "/include");
 
-    const detected_target = (std.zig.system.NativeTargetInfo.detect(b.allocator, target) catch unreachable).target;
+    var build_dir = try std.fs.cwd().openDir(upstream_dir ++ "/include/freetype/config", .{});
+    defer build_dir.close();
+
+    build_dir.access("ftoption_original.h", .{ .mode = .read_only }) catch {
+        try build_dir.copyFile("ftoption.h", build_dir, "ftoption_original.h", .{});
+    };
+    try build_dir.copyFile("ftoption_original.h", build_dir, "ftoption.h", .{});
+
+    const options_file = try build_dir.openFile("ftoption.h", .{ .mode = .read_write });
+    defer options_file.close();
+
+    const options_data = try options_file.readToEndAlloc(b.allocator, 1024 * 1024 * 1024);
+    defer b.allocator.free(options_byte);
+
+    const options_header_end_index = std.mem.indexOf(u8, options_byte, "\nFT_END_HEADER") orelse 0;
+    const header_end_data = options_byte[options_header_end_index..];
+    try options_file.seekTo(options_header_end_index);
 
     var sources = std.ArrayList([]const u8).init(b.allocator);
     defer sources.deinit();
 
     inline for (freetype_base_sources) |source| {
-        sources.append(base_dir ++ source) catch unreachable;
+        try sources.append(upstream_dir ++ source);
     }
 
-    sources.append(switch (detected_target.os.tag) {
-        .windows => base_dir ++ "/builds/windows/ftsystem.c",
-        .macos, .linux => base_dir ++ "/builds/unix/ftsystem.c",
-        else => base_dir ++ "/src/base/ftsystem.c",
-    }) catch unreachable;
+    const detected_target = (try std.zig.system.NativeTargetInfo.detect(b.allocator, target)).target;
+    switch (detected_target.os.tag) {
+        .windows => {
+            try sources.append(upstream_dir ++ "/builds/windows/ftsystem.c");
+        },
+        .macos, .linux => {
+            try options_file.writeAll("#define HAVE_UNISTD_H 1\n");
+            try options_file.writeAll("#define HAVE_FCNTL_H 1\n");
+            try sources.append(upstream_dir ++ "/builds/unix/ftsystem.c");
+        },
+        else => {
+            try sources.append(upstream_dir ++ "/src/base/ftsystem.c");
+        },
+    }
+
+    // configure options
+    if (options.lcd_rendering) {
+        try options_file.writeAll("#define FT_CONFIG_OPTION_SUBPIXEL_RENDERING 1\n");
+    }
+
+    try options_file.writeAll(header_end_data);
 
     lib.addCSourceFiles(sources.items, &.{});
-    lib.addIncludePath(base_dir ++ "/include");
-
     lib.install();
+
     return lib;
 }
 
@@ -63,19 +84,24 @@ pub fn build(b: *std.build.Builder) !void {
     const mode = b.standardReleaseOptions();
     const target = b.standardTargetOptions(.{});
 
-    const main_tests = b.addTestExe("test", "src/main.zig");
+    const main_tests = b.addTest("src/main.zig");
     main_tests.setBuildMode(mode);
     main_tests.setTarget(target);
-
-    // Build and Link FreeType
-    const freetype = buildFreeType(b, mode, target, thisDir() ++ "/upstream/freetype/", .{});
-    main_tests.linkLibrary(freetype);
-    // Translate Headers
-    translateHeaders(b, thisDir() ++ "/upstream/freetype/include");
-    // Add Package
     main_tests.addPackagePath("freetype", "src/main.zig");
 
-    main_tests.install();
+    // Build and Link FreeType
+    const freetype = try buildFreeType(b, mode, target, .{});
+    main_tests.linkLibrary(freetype);
+
+    // Translate Headers
+    const c_translate = b.addTranslateC(.{ .path = thisDir() ++ "/src/c.c" });
+    c_translate.addIncludeDir(thisDir() ++ "/upstream/freetype/include");
+    c_translate.output_dir = thisDir() ++ "/src";
+    c_translate.out_basename = "c.zig";
+    c_translate.step.make() catch unreachable;
+
+    const test_step = b.step("test", "Run library tests");
+    test_step.dependOn(&main_tests.step);
 }
 
 const freetype_base_sources = &[_][]const u8{

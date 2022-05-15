@@ -1020,9 +1020,6 @@ FT_BEGIN_HEADER
 #error "Invalid CFF darkening parameters!"
 #endif
 
-#define HAVE_UNISTD_H 1
-#define HAVE_FCNTL_H 1
-#define FT_CONFIG_OPTION_SUBPIXEL_RENDERING 1
 
 FT_END_HEADER
 

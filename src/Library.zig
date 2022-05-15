@@ -76,7 +76,10 @@ test "new stroker" {
 }
 
 test "set lcd filter" {
-    return error.SkipZigTest;
-    // const lib = try init();
-    // try lib.setLcdFilter(.default);
+    if (@hasDecl(c, "FT_CONFIG_OPTION_SUBPIXEL_RENDERING")) {
+        const lib = try init();
+        try lib.setLcdFilter(.default);
+    } else {
+        return error.SkipZigTest;
+    }
 }
