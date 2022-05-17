@@ -265,29 +265,3 @@ pub fn postscriptName(self: Face) ?[:0]const u8 {
     else
         std.mem.span(face_name);
 }
-
-test "load glyph" {
-    const lib = try Library.init();
-    const face = try lib.newFace("assets/FiraSans-Regular.ttf", 0);
-
-    try face.setPixelSizes(100, 100);
-    try face.setCharSize(10 * 10, 0, 72, 0);
-
-    try face.loadGlyph(205, .{});
-    try face.loadChar('A', .{});
-
-    face.deinit();
-}
-
-test "attach file" {
-    const lib = try Library.init();
-    const face = try lib.newFace("assets/DejaVuSans.pfb", 0);
-    try face.attachFile("assets/DejaVuSans.pfm");
-}
-
-test "attach memory" {
-    const lib = try Library.init();
-    const face = try lib.newFace("assets/DejaVuSans.pfb", 0);
-    const file = @embedFile("../assets/DejaVuSans.pfm");
-    try face.attachMemory(file);
-}

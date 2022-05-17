@@ -58,28 +58,3 @@ pub fn newStroker(self: Library) Error!Stroker {
 pub fn setLcdFilter(self: Library, lcd_filter: LcdFilter) Error!void {
     return convertError(c.FT_Library_SetLcdFilter(self.handle, @enumToInt(lcd_filter)));
 }
-
-test "new face from file" {
-    const lib = try init();
-    _ = try lib.newFace("assets/FiraSans-Regular.ttf", 0);
-}
-
-test "new face from memory" {
-    const lib = try init();
-    const file = @embedFile("../assets/FiraSans-Regular.ttf");
-    _ = try lib.newFaceMemory(file, 0);
-}
-
-test "new stroker" {
-    const lib = try init();
-    _ = try lib.newStroker();
-}
-
-test "set lcd filter" {
-    if (@hasDecl(c, "FT_CONFIG_OPTION_SUBPIXEL_RENDERING")) {
-        const lib = try init();
-        try lib.setLcdFilter(.default);
-    } else {
-        return error.SkipZigTest;
-    }
-}
