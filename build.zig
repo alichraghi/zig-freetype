@@ -262,12 +262,6 @@ pub fn build(b: *std.build.Builder) !void {
     const mode = b.standardReleaseOptions();
     const target = b.standardTargetOptions(.{});
 
-    const main_tests = b.addTest("src/main.zig");
-    main_tests.setBuildMode(mode);
-    main_tests.setTarget(target);
-    main_tests.addPackagePath("freetype", "src/main.zig");
-
-    // Build and Link FreeType
     const freetype = try buildFreeType(b, mode, target, thisDir() ++ "/test/ft", Options{
         .bdf = true,
         .cff = true,
@@ -294,11 +288,23 @@ pub fn build(b: *std.build.Builder) !void {
         .sdf = true,
         .smooth = true,
     });
+
+    const dedicated_tests = b.addTest("src/main.zig");
+    dedicated_tests.setBuildMode(mode);
+    dedicated_tests.setTarget(target);
+    dedicated_tests.linkLibrary(freetype);
+    dedicated_tests.addIncludePath(ft_root ++ "/include");
+
+    const main_tests = b.addTest("test/main.zig");
+    main_tests.setBuildMode(mode);
+    main_tests.setTarget(target);
+    main_tests.addPackagePath("freetype", "src/main.zig");
     main_tests.linkLibrary(freetype);
     main_tests.addIncludePath(thisDir() ++ "/test/ft");
     main_tests.addIncludePath(ft_root ++ "/include");
 
     const test_step = b.step("test", "Run library tests");
+    test_step.dependOn(&dedicated_tests.step);
     test_step.dependOn(&main_tests.step);
 }
 
