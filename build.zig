@@ -166,6 +166,7 @@ pub fn build(b: *std.build.Builder) !void {
     const target = b.standardTargetOptions(.{});
 
     const freetype = try buildFreeType(b, mode, target, thisDir() ++ "/test/ft", Options{
+        .bdf = true,
         .cff = true,
         .type1cid = true,
         .pcf = true,
