@@ -88,10 +88,7 @@ fn buildFreeType(b: *std.build.Builder, mode: std.builtin.Mode, target: std.zig.
     inline for (freetype_base_sources) |source|
         try sources.append(ft_root ++ source);
 
-    if (options.bdf) {
-        try sources.append(ft_root ++ "/src/base/ftbdf.c");
-        try sources.append(ft_root ++ "/src/bdf/bdf.c");
-    }
+    if (options.bdf) try sources.append(ft_root ++ "/src/bdf/bdf.c");
     if (options.cff) {
         if (!options.sfnt) @compileError("CFF requires SFNT module");
         if (!options.pshinter) @compileError("CFF requires PSHinter module");
@@ -102,14 +99,10 @@ fn buildFreeType(b: *std.build.Builder, mode: std.builtin.Mode, target: std.zig.
         if (!options.psaux) @compileError("Type1CID requires PSAux module");
         if (!options.pshinter) @compileError("Type1CID requires PSHinter module");
         if (!options.psnames) @compileError("Type1CID requires PSNames module");
-        try sources.append(ft_root ++ "/src/base/ftcid.c");
         try sources.append(ft_root ++ "/src/cid/type1cid.c");
     }
     if (options.pcf) try sources.append(ft_root ++ "/src/pcf/pcf.c");
-    if (options.pfr) {
-        try sources.append(ft_root ++ "/src/base/ftpfr.c");
-        try sources.append(ft_root ++ "/src/pfr/pfr.c");
-    }
+    if (options.pfr) try sources.append(ft_root ++ "/src/pfr/pfr.c");
     if (options.sfnt) try sources.append(ft_root ++ "/src/sfnt/sfnt.c");
     if (options.truetype) {
         if (!options.sfnt) @compileError("TrueType requires SFNT module");
@@ -120,18 +113,13 @@ fn buildFreeType(b: *std.build.Builder, mode: std.builtin.Mode, target: std.zig.
         if (!options.psaux) @compileError("Type1 requires PSAux module");
         if (!options.pshinter) @compileError("Type1 requires PSHinter module");
         if (!options.psnames) @compileError("Type1 requires PSNames module");
-        try sources.append(ft_root ++ "/src/base/fttype1.c");
-        try sources.append(ft_root ++ "/src/base/ftfstype.c");
         try sources.append(ft_root ++ "/src/type1/type1.c");
     }
     if (options.type42) {
         if (!options.truetype) @compileError("Type42 requires TrueType module");
         try sources.append(ft_root ++ "/src/type42/type42.c");
     }
-    if (options.winfnt) {
-        try sources.append(ft_root ++ "/src/base/ftwinfnt.c");
-        try sources.append(ft_root ++ "/src/winfonts/winfnt.c");
-    }
+    if (options.winfnt) try sources.append(ft_root ++ "/src/winfonts/winfnt.c");
 
     if (options.autofit) try sources.append(ft_root ++ "/src/autofit/autofit.c");
     if (options.cache_subsystem) try sources.append(ft_root ++ "/src/cache/ftcache.c");
@@ -178,7 +166,6 @@ pub fn build(b: *std.build.Builder) !void {
     const target = b.standardTargetOptions(.{});
 
     const freetype = try buildFreeType(b, mode, target, thisDir() ++ "/test/ft", Options{
-        .bdf = true,
         .cff = true,
         .type1cid = true,
         .pcf = true,
@@ -229,11 +216,17 @@ const freetype_base_sources = &[_][]const u8{
     "/src/base/ftbbox.c",
     "/src/base/ftglyph.c",
     "/src/base/ftbitmap.c",
+    "/src/base/ftbdf.c",
+    "/src/base/ftcid.c",
+    "/src/base/ftfstype.c",
     "/src/base/ftgasp.c",
     "/src/base/ftgxval.c",
     "/src/base/ftmm.c",
     "/src/base/ftotval.c",
     "/src/base/ftpatent.c",
+    "/src/base/ftpfr.c",
     "/src/base/ftstroke.c",
     "/src/base/ftsynth.c",
+    "/src/base/fttype1.c",
+    "/src/base/ftwinfnt.c",
 };
