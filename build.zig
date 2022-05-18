@@ -163,7 +163,7 @@ fn buildFreeType(b: *std.build.Builder, mode: std.builtin.Mode, target: std.zig.
         lib.defineCMacro("HAVE_FCNTL_H", "1");
         try sources.append(ft_root ++ "/builds/unix/ftsystem.c");
         if (detected_target.os.tag == .macos) {
-            try sources.append("/src/base/ftmac.c");
+            try sources.append(ft_root ++ "/src/base/ftmac.c");
         }
     }
 
