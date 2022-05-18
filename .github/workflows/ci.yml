@@ -5,6 +5,11 @@ on:
 jobs:
   x86_64-linux:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        project: ['.']
+    # We want to run on external PRs, but not on our own internal PRs as they'll be run by the push
+    # to the branch.
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     steps:
       - name: Checkout
@@ -14,19 +19,28 @@ jobs:
           sudo apt install xz-utils
           sudo sh -c 'wget -c https://ziglang.org/builds/zig-linux-x86_64-0.10.0-dev.2017+a0a2ce92c.tar.xz -O - | tar -xJ --strip-components=1 -C /usr/local/bin'
       - name: x86_64-linux -> x86_64-macos
-        run: zig build test -Dtarget=x86_64-macos.12...12-gnu
+        run: cd ${{ matrix.project }} && zig build test -Dtarget=x86_64-macos.12...12-gnu
+        env:
+          AGREE: true
       - name: x86_64-linux -> aarch64-macos
-        run: zig build test -Dtarget=aarch64-macos.12...12-gnu
+        run: cd ${{ matrix.project }} && zig build test -Dtarget=aarch64-macos.12...12-gnu
+        env:
+          AGREE: true
       - name: x86_64-linux -> x86_64-windows
-        run: zig build test -Dtarget=x86_64-windows-gnu
+        run: cd ${{ matrix.project }} && zig build test -Dtarget=x86_64-windows-gnu
       - name: compile all examples
         if: matrix.project == '.'
-        run: zig build compile-all
+        run: cd ${{ matrix.project }} && zig build compile-all
       - name: test
         run: |
-          zig build test
+          cd ${{ matrix.project }} && zig build test
   x86_64-windows:
     runs-on: windows-latest
+    strategy:
+      matrix:
+        project: ['.']
+    # We want to run on external PRs, but not on our own internal PRs as they'll be run by the push
+    # to the branch.
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     steps:
       - name: Checkout
@@ -41,17 +55,27 @@ jobs:
           7z x zig.zip
           Add-Content $env:GITHUB_PATH "C:\zig-windows-x86_64-0.10.0-dev.2017+a0a2ce92c\"
       - name: x86_64-windows -> x86_64-macos
-        run: zig build test -Dtarget='x86_64-macos.12...12-gnu'
+        run: cd ${{ matrix.project }} && zig build test -Dtarget='x86_64-macos.12...12-gnu'
+        env:
+          AGREE: true
       - name: x86_64-windows -> aarch64-macos
-        run: zig build test -Dtarget='aarch64-macos.12...12-gnu'
+        run: cd ${{ matrix.project }} && zig build test -Dtarget='aarch64-macos.12...12-gnu'
+        env:
+          AGREE: true
       - name: x86_64-windows -> x86_64-linux
-        run: zig build test -Dtarget=x86_64-linux-gnu
+        run: cd ${{ matrix.project }} && zig build test -Dtarget=x86_64-linux-gnu
       - name: compile all examples
-        run: zig build compile-all
+        if: matrix.project == '.'
+        run: cd ${{ matrix.project }} && zig build compile-all
       - name: test
-        run: zig build test
+        run: cd ${{ matrix.project }} && zig build test
   x86_64-macos:
     runs-on: macos-latest
+    strategy:
+      matrix:
+        project: ['.']
+    # We want to run on external PRs, but not on our own internal PRs as they'll be run by the push
+    # to the branch.
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     steps:
       - name: Checkout
@@ -60,9 +84,17 @@ jobs:
         run: |
           brew install xz
           sudo sh -c 'wget -c https://ziglang.org/builds/zig-macos-x86_64-0.10.0-dev.2017+a0a2ce92c.tar.xz -O - | tar -xJ --strip-components=1 -C /usr/local/bin'
+      # TODO: re-enable once we can use macos-12 reliably on GitHub actions (currently works, but
+      #       takes a very long time to acquire macos-12 runners.)
+      # - name: test
+      #   run: cd ${{ matrix.project }} && zig build test
+      #   env:
+      #     AGREE: true
       - name: x86_64-macos -> aarch64-macos
-        run: zig build test -Dtarget=aarch64-macos.12...12-gnu
+        run: cd ${{ matrix.project }} && zig build test -Dtarget=aarch64-macos.12...12-gnu
+        env:
+          AGREE: true
       - name: x86_64-macos -> x86_64-windows
-        run: zig build test -Dtarget=x86_64-windows-gnu
+        run: cd ${{ matrix.project }} && zig build test -Dtarget=x86_64-windows-gnu
       - name: x86_64-macos -> x86_64-linux
-        run: zig build test -Dtarget=x86_64-linux-gnu
+        run: cd ${{ matrix.project }} && zig build test -Dtarget=x86_64-linux-gnu
