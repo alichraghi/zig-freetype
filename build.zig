@@ -6,7 +6,7 @@ fn thisDir() []const u8 {
     return std.fs.path.dirname(@src().file) orelse ".";
 }
 
-fn buildFreeType(b: *std.build.Builder, mode: std.builtin.Mode, target: std.zig.CrossTarget, root_path: []const u8, custom_config_path: ?[]const u8) !*std.build.LibExeObjStep {
+pub fn buildFreeType(b: *std.build.Builder, mode: std.builtin.Mode, target: std.zig.CrossTarget, root_path: []const u8, custom_config_path: ?[]const u8) !*std.build.LibExeObjStep {
     const main_abs = try std.fs.path.join(b.allocator, &.{ root_path, "src/base/ftbase.c" });
     const include_path = try std.fs.path.join(b.allocator, &.{ root_path, "include" });
     defer b.allocator.free(main_abs);
